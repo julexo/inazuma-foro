@@ -13,7 +13,7 @@ type SupabaseThread = {
   created_at: string;
   title: string;
   content: string | null;
-  formation_data: any;
+  formation_data: Formation | null;
 
   
   profiles: ({
@@ -43,44 +43,38 @@ export default async function HomePage() {
   }
 
 
-  // 2. Mapea la variable, asignando los tipos explícitamente y manejando los nulos
   const rawThreads = Array.isArray(threadsData) ? threadsData : [];
 
- 
-  const threads: Thread[] = rawThreads.map(thread => {
+const threads: Thread[] = rawThreads.map((thread: SupabaseThread) => { // <-- Tipamos aquí
 
-    // Asignamos el objeto que recibimos de la base de datos a una constante
-    // Hacemos la aserción *aquí* para poder usar los campos con seguridad.
-    const data = thread as SupabaseThread;
+    // Ya no necesitas 'const data = thread as SupabaseThread;'
 
-    const safeFormation: Formation = (data.formation_data || {
-      name: '4-4-2 (Defecto)',
-      players: []
-    }) as Formation;
+    // Manejo seguro si formation_data es null
+    const safeFormation: Formation = thread.formation_data || {
+        name: '4-4-2 (Defecto)',
+        players: []
+    }; 
+
+    // Extraemos el perfil
+    const profile = thread.profiles ? thread.profiles[0] : null;
 
     return {
-      id: data.id,
-      title: data.title,
-      content: data.content || '',
+        id: thread.id,
+        title: thread.title,
+        content: thread.content || '',
 
-      // Manejo de Perfil y Avatar
-      // Reemplaza esto:
+        author: profile?.username || 'Usuario Desconocido',
+        authorAvatar: profile?.avatar_url || '/default-avatar.png',
 
-      author: data.profiles?.[0]?.username || 'Usuario Desconocido',
-      authorAvatar: data.profiles?.[0]?.avatar_url || '/default-avatar.png',
+        formation: safeFormation,
 
-      formation: safeFormation,
+        timestamp: new Date(thread.created_at),
 
-      // Manejo del TIMESTAMP: new Date() devuelve el tipo Date que la interfaz espera.
-      timestamp: new Date(data.created_at),
-
-      // --- DATOS SIMULADOS ---
-      replies: [],
-      views: Math.floor(Math.random() * 500) + 10,
-      likes: Math.floor(Math.random() * 50) + 5,
-    } as Thread; // <-- Forzamos el tipo al final para asegurar la compatibilidad
-  });
-  
+        replies: [],
+        views: Math.floor(Math.random() * 500) + 10,
+        likes: Math.floor(Math.random() * 50) + 5,
+    } 
+});
 
   return (
     <main className="min-h-screen bg-gray-50">

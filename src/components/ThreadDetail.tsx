@@ -1,9 +1,9 @@
+'use client'
 import { useState } from 'react';
 import { Thread, Reply } from '@/types';
 import { Card } from '@/components/ui/card';
 import { Button } from './ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { FormationField } from '@/components/FormationField';
 import { X, Send } from 'lucide-react';

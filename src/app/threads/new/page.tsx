@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
-import { Formation, Player } from '@/types' // <-- Importa nuestros tipos
+import { Formation} from '@/types' // <-- Importa nuestros tipos
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

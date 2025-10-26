@@ -114,7 +114,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="PEGA_TU_LLAVE_ANON_PUBLICA_AQUI"
 Inicia el servidor de desarrollo de Next.js:
 
 ```bash
-npm run dwv
+npm run dev
 ```
 
 **🎉 ¡Abre http://localhost:3000 en tu navegador y disfruta del foro! 🎉**

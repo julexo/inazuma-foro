@@ -1,5 +1,8 @@
+// src/components/builder/DragDropFormationBuilder.tsx
+'use client' // <- Asegúrate de que tiene 'use client' si usa useState
+
 import { useState } from 'react';
-import { Formation, Player } from '@/types'
+import { Formation } from '@/types';
 import { PlayerSidebar } from './PlayerSidebar';
 import { PlayerData } from '@/lib/PlayerDataBase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,7 +35,6 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
   const handleDrop = (e: React.DragEvent, slotId: number) => {
     e.preventDefault();
     if (draggedPlayer) {
-      const existingPlayer = formation.players.find(p => p.id === slotId);
       const updatedPlayers = formation.players.map(player =>
         player.id === slotId
           ? {
@@ -68,14 +70,8 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
     return 'Delantero';
   };
 
-  const handlePlayerMove = (playerId: number, x: number, y: number) => {
-    const updatedPlayers = formation.players.map(player =>
-      player.id === playerId ? { ...player, position: { x, y } } : player
-    );
-    onFormationChange({ ...formation, players: updatedPlayers });
-  };
 
-  const handleFieldClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleFieldClick = () => {
     // Don't move players on field click in drag-drop mode
   };
 
@@ -91,40 +87,43 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
         <Alert className="border-sky-200 bg-sky-50">
           <AlertCircle className="h-4 w-4 text-sky-600" />
           <AlertDescription className="text-sky-800">
-            Arrastra jugadores desde el panel lateral hacia las posiciones en el campo. Puedes mover las posiciones haciendo clic y arrastrando en el campo.
+            Arrastra jugadores desde el panel lateral hacia las posiciones en el campo.
           </AlertDescription>
         </Alert>
 
         <div
           className="relative w-full aspect-[3/2] bg-gradient-to-b from-green-600 to-green-700 rounded-lg overflow-hidden"
-          onClick={handleFieldClick}
+          onClick={handleFieldClick} // Ahora llama a la función sin parámetros
         >
-          {/* Field lines */}
+          {/* Field lines ... */}
           <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" preserveAspectRatio="none">
+             {/* Líneas exteriores */}
             <rect x="2%" y="2%" width="96%" height="96%" fill="none" stroke="white" strokeWidth="2" />
+            {/* Línea central */}
             <line x1="50%" y1="2%" x2="50%" y2="98%" stroke="white" strokeWidth="2" />
+            {/* Círculo central */}
             <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="2" />
             <circle cx="50%" cy="50%" r="1%" fill="white" />
+            {/* Área izquierda */}
             <rect x="2%" y="30%" width="15%" height="40%" fill="none" stroke="white" strokeWidth="2" />
             <rect x="2%" y="42%" width="8%" height="16%" fill="none" stroke="white" strokeWidth="2" />
+            {/* Área derecha */}
             <rect x="83%" y="30%" width="15%" height="40%" fill="none" stroke="white" strokeWidth="2" />
             <rect x="90%" y="42%" width="8%" height="16%" fill="none" stroke="white" strokeWidth="2" />
           </svg>
 
           {/* Player slots */}
           {formation.players.map((player) => {
-            const playerData = (player as any).playerData as PlayerData | undefined;
+            const playerData = player.playerData;
             const isHovered = hoveredSlot === player.id;
-            
+
             return (
               <div
                 key={player.id}
                 draggable={!!playerData}
-                onDragStart={(e) => {
+                onDragStart={(e: React.DragEvent) => {
                   if (playerData) {
                     e.dataTransfer.effectAllowed = 'move';
-                    // Allow repositioning existing players
-                    const rect = e.currentTarget.getBoundingClientRect();
                     e.dataTransfer.setData('playerId', player.id.toString());
                   }
                 }}
@@ -138,6 +137,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
                 }}
               >
                 <div className="relative group">
+                  {/* Div principal del jugador */}
                   <div
                     className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
                       isHovered
@@ -151,6 +151,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
                         : 'bg-white/20 backdrop-blur-sm cursor-pointer'
                     }`}
                   >
+                    {/* Contenido del círculo (Avatar o ID) */}
                     {playerData ? (
                       <Avatar className="h-14 w-14 border-2 border-white">
                         <AvatarImage src={playerData.avatar} />
@@ -161,18 +162,18 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
                     )}
                   </div>
 
-                  {/* Player name tooltip */}
+                  {/* Tooltip del nombre */}
                   <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 whitespace-nowrap bg-black/90 text-white px-3 py-1.5 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
                     {player.name}
                   </div>
 
-                  {/* Remove button */}
+                  {/* Botón de eliminar */}
                   {playerData && (
                     <Button
                       size="icon"
                       variant="destructive"
                       className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         handleRemovePlayer(player.id);
                       }}
@@ -189,9 +190,9 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
         {/* Player count */}
         <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
           <span className="text-blue-900">
-            Jugadores asignados: {formation.players.filter(p => (p as any).playerData).length} / 11
+            Jugadores asignados: {formation.players.filter(p => p.playerData).length} / 11
           </span>
-          {formation.players.filter(p => (p as any).playerData).length === 11 && (
+          {formation.players.filter(p => p.playerData).length === 11 && (
             <span className="text-green-600 flex items-center gap-1">
               ✓ Alineación completa
             </span>
