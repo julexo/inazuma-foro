@@ -54,37 +54,20 @@ Sigue estos pasos para levantar el proyecto en tu máquina local.
 ### 2. Clonar el Repositorio
 
 ```bash
-git clone [https://github.com/julexo/inazuma-foro.git](https://github.com/julexo/inazuma-foro.git)
+git clone https://github.com/julexo/inazuma-foro.git
 cd inazuma-foro
 ```
 ## 🔧 Instalación y Puesta en Marcha
 
 Sigue estos pasos para levantar el proyecto en tu máquina local y empezar a desarrollar:
 
-### 1️⃣ Prerrequisitos
-
-Asegúrate de tener instaladas las siguientes herramientas:
-
-* **[Node.js](https://nodejs.org/es/)** (v18 o superior recomendado)
-* **[Git](https://git-scm.com/)**
-* Una cuenta gratuita de **[Supabase](https://supabase.com)**
-
-### 2️⃣ Clonar el Repositorio
-
-Abre tu terminal y clona el proyecto:
-<p align="center">
-  <img src="C:\Users\HomePC\Pictures\Screenshots\clonar.png" width="120" alt="Imagen de clonar en shell">
-</p>
-
-
-
 ### 3️⃣ Instalar Dependencias
 Instala todas las librerías necesarias con npm:
 
-<p align="center">
-  <img src="C:\Users\HomePC\Pictures\Screenshots\dependecias.png" width="120" alt="Instalar dependencia">
-</p>
+```bash
+npm install
 
+```
 
 ### 4️⃣ Configurar Supabase Backend ☁️
 Este es el paso más crucial para conectar tu foro a la base de datos:
@@ -130,10 +113,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="PEGA_TU_LLAVE_ANON_PUBLICA_AQUI"
 ### 6️⃣ ¡A Correr! 🏃
 Inicia el servidor de desarrollo de Next.js:
 
+```bash
+npm run dwv
+```
 
 **🎉 ¡Abre http://localhost:3000 en tu navegador y disfruta del foro! 🎉**
-<p align="center">
-  <img src="C:\Users\HomePC\Pictures\Screenshots\correr.png" width="120" alt="npm run dev">
-</p>
 
 <p align="center"> Creado con 🔥 y ⚽ por <a href="https://github.com/julexo">julexo</a> </p>
