@@ -53,10 +53,10 @@ Sigue estos pasos para levantar el proyecto en tu máquina local.
 
 ### 2. Clonar el Repositorio
 
---bash
+```bash
 git clone [https://github.com/julexo/inazuma-foro.git](https://github.com/julexo/inazuma-foro.git)
 cd inazuma-foro
-
+```
 ## 🔧 Instalación y Puesta en Marcha
 
 Sigue estos pasos para levantar el proyecto en tu máquina local y empezar a desarrollar:
