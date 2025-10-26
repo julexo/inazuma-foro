@@ -41,6 +41,99 @@ Este proyecto es un foro web completo construido desde cero con el App Router de
 * **Iconos:** [Lucide React](https://lucide.dev/)
 * **Control de Versiones:** [Git](https://git-scm.com/) & [GitHub](https://github.com/)
 
+## 🔧 Instalación y Puesta en Marcha
 
+Sigue estos pasos para levantar el proyecto en tu máquina local.
+
+### 1. Prerrequisitos
+
+* [Node.js](https://nodejs.org/es/) (v18 o superior)
+* [Git](https://git-scm.com/)
+* Una cuenta gratuita de [Supabase](https://supabase.com)
+
+### 2. Clonar el Repositorio
+
+--bash
+git clone [https://github.com/julexo/inazuma-foro.git](https://github.com/julexo/inazuma-foro.git)
+cd inazuma-foro
+
+## 🔧 Instalación y Puesta en Marcha
+
+Sigue estos pasos para levantar el proyecto en tu máquina local y empezar a desarrollar:
+
+### 1️⃣ Prerrequisitos
+
+Asegúrate de tener instaladas las siguientes herramientas:
+
+* **[Node.js](https://nodejs.org/es/)** (v18 o superior recomendado)
+* **[Git](https://git-scm.com/)**
+* Una cuenta gratuita de **[Supabase](https://supabase.com)**
+
+### 2️⃣ Clonar el Repositorio
+
+Abre tu terminal y clona el proyecto:
+<p align="center">
+  <img src="C:\Users\HomePC\Pictures\Screenshots\clonar.png" width="120" alt="Imagen de clonar en shell">
+</p>
+
+
+
+### 3️⃣ Instalar Dependencias
+Instala todas las librerías necesarias con npm:
+
+<p align="center">
+  <img src="C:\Users\HomePC\Pictures\Screenshots\dependecias.png" width="120" alt="Instalar dependencia">
+</p>
+
+
+### 4️⃣ Configurar Supabase Backend ☁️
+Este es el paso más crucial para conectar tu foro a la base de datos:
+
+🚀 **Crear Proyecto:** Ve a [Supabase](https://supabase.com) y crea un nuevo proyecto.
+
+📝 **Configurar Tablas:**
+
+1. Navega al "Table Editor".
+
+2. **Crea las tablas:** profiles, threads, posts (y las que necesites en el futuro).
+
+**Importante: La tabla threads debe tener una columna formation_data (tipo jsonb). La tabla profiles debe tener role y status (tipo text).**
+
+🔗 **Añadir Trigger de Perfil:**
+
+1. Ve al "SQL Editor".
+
+2. Ejecuta el script SQL que encontrarás en el archivo **[`SETUP.md`](./SETUP.md)** para crear perfiles automáticamente.
+
+**🛡️Configurar RLS (Row Level Security):**
+
+1. Activa RLS en todas tus tablas sensibles (profiles, threads, posts).
+
+2. Añade las políticas necesarias para permitir SELECT, INSERT, etc., según los permisos de usuario (ej: solo usuarios logueados pueden crear hilos).
+
+### 5️⃣ Variables de Entorno 🔑
+1. Conecta tu proyecto local con tu backend de Supabase:
+
+2. Busca tus claves API en "Configuración > API" dentro de tu proyecto Supabase.
+
+3. En la raíz de tu proyecto "inazuma-foro", crea un archivo llamado .env.local.
+
+4. Pega tus claves dentro del archivo:
+
+# .env.local
+
+NEXT_PUBLIC_SUPABASE_URL="PEGA_TU_URL_DE_SUPABASE_AQUI"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="PEGA_TU_LLAVE_ANON_PUBLICA_AQUI"
+
+**(Recuerda reiniciar el servidor si ya estaba corriendo después de crear este archivo).**
+
+### 6️⃣ ¡A Correr! 🏃
+Inicia el servidor de desarrollo de Next.js:
+
+
+**🎉 ¡Abre http://localhost:3000 en tu navegador y disfruta del foro! 🎉**
+<p align="center">
+  <img src="C:\Users\HomePC\Pictures\Screenshots\correr.png" width="120" alt="npm run dev">
+</p>
 
 <p align="center"> Creado con 🔥 y ⚽ por <a href="https://github.com/julexo">julexo</a> </p>
