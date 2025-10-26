@@ -2,13 +2,10 @@
 
 import { supabase } from '@/lib/supabaseClient'
 import { Thread, Formation } from '@/types'
-// Importamos la exportación nombrada (¡esto es correcto!)
 import { ThreadDetail } from '@/components/ThreadDetail' 
 import Header from "@/components/Header" 
 
-// 🚨 CORRECCIÓN DE TIPO:
-// El 'join' de Supabase devuelve 'profiles' como un ARRAY,
-// incluso cuando se usa .single().
+
 type SupabaseThreadDetail = {
   id: number;
   created_at: string;
@@ -24,8 +21,6 @@ type SupabaseThreadDetail = {
 export default async function ThreadPage({ params }: { params: { threadId: string } }) {
   
   // 1. Consulta del Hilo específico
-  // 🚨 CORRECCIÓN DE SINTAXIS: La consulta debe ir en UNA SOLA LÍNEA
-  // para evitar el 'ParserError'.
   const { data: threadData, error } = await supabase
     .from('threads')
     .select('id, created_at, title, content, formation_data, profiles(username, avatar_url)')
@@ -40,7 +35,7 @@ export default async function ThreadPage({ params }: { params: { threadId: strin
   
   const data = threadData as SupabaseThreadDetail;
   
-  // 🚨 CORRECCIÓN DE ACCESO:
+  
   // Extraemos el primer (y único) perfil del array 'profiles'
   const profile = data.profiles ? data.profiles[0] : null;
 
@@ -55,7 +50,7 @@ export default async function ThreadPage({ params }: { params: { threadId: strin
     title: data.title,
     content: data.content || '', 
     
-    // 🚨 CORRECCIÓN DE USO: Usamos el objeto 'profile' extraído
+    
     author: profile?.username || 'Usuario Desconocido',
     authorAvatar: profile?.avatar_url || '/default-avatar.png',
     

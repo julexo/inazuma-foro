@@ -7,7 +7,7 @@ import { ThreadList } from "@/components/ThreadList" // El nuevo componente
 import FilterBox from "@/components/FilterBox" // Puedes usar el FilterBox que creamos antes
 
 // Define un tipo para el dato que llega de Supabase
-// Define un tipo para el dato que llega de Supabase
+
 type SupabaseThread = {
   id: number;
   created_at: string;
@@ -15,11 +15,11 @@ type SupabaseThread = {
   content: string | null;
   formation_data: any;
 
-  // 🚨 CORRECCIÓN CRUCIAL: Lo definimos como un ARRAY que contiene un solo objeto (o null)
+  
   profiles: ({
     username: string;
     avatar_url: string | null;
-  }[] | null); // <- La forma en que TypeScript lo lee para el mapeo
+  }[] | null); 
 }
 
 export default async function HomePage() {
@@ -46,7 +46,7 @@ export default async function HomePage() {
   // 2. Mapea la variable, asignando los tipos explícitamente y manejando los nulos
   const rawThreads = Array.isArray(threadsData) ? threadsData : [];
 
-  // 2. Mapea la variable, asignando los tipos explícitamente y manejando los nulos
+ 
   const threads: Thread[] = rawThreads.map(thread => {
 
     // Asignamos el objeto que recibimos de la base de datos a una constante
@@ -80,9 +80,7 @@ export default async function HomePage() {
       likes: Math.floor(Math.random() * 50) + 5,
     } as Thread; // <-- Forzamos el tipo al final para asegurar la compatibilidad
   });
-  // ...
-
-  // ... (continúa el 'return' de tu componente) ...
+  
 
   return (
     <main className="min-h-screen bg-gray-50">

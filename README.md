@@ -1,38 +1,16 @@
-nazuma Foro ⚡
-Un foro web completo construido con Next.js y Supabase para los fans de Inazuma Eleven. El corazón del proyecto es un Creador de Alineaciones interactivo que permite a los usuarios diseñar, publicar y discutir sus formaciones y estrategias de equipo.
+Aquí tienes un README.md con un estilo profesional y moderno, usando elementos de Markdown como badges, emojis y una estructura clara que lucirá genial en tu perfil de GitHub.
 
-Características Principales
-Autenticación de Usuarios: Sistema completo de registro e inicio de sesión gestionado por Supabase Auth.
+Simplemente copia y pega todo el contenido de este bloque de código en el archivo README.md que está en la raíz de tu proyecto.
 
-Creación de Hilos: Los usuarios pueden crear nuevos hilos de discusión (alineaciones).
+<p align="center"> <img src="httpsGet-Image-from-Query:Icono-futbol-fuego-estilo-Inazuma" width="120" alt="Logo del Foro"> </p>
 
-Constructor de Alineaciones: Una interfaz de Drag & Drop para arrastrar jugadores desde una base de datos a una formación en el campo.
+<h1 align="center"> Inazuma Foro ⚡⚽ </h1>
 
-Gestión de Perfiles: Tabla profiles conectada a la autenticación para gestionar roles y estados (como baneos).
+<p align="center"> El foro definitivo para crear, compartir y discutir alineaciones del universo Inazuma Eleven. </p>
 
-Visualización de Hilos y Posts: Consulta de datos en tiempo real desde Supabase para mostrar las alineaciones y sus respuestas.
+<p align="center"> <a href="https://nextjs.org/"> <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js"> </a> <a href="https://supabase.com/"> <img src="https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase"> </a> <a href="https://www.typescriptlang.org/"> <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"> </a> <a href="https://tailwindcss.com/"> <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS"> </a> </p>
 
-Seguridad: Implementación de Row Level Security (RLS) en Supabase para proteger los datos (ej: solo los usuarios pueden crear hilos, los usuarios baneados no pueden postear).
+<p align="center"> <a href="#demo">Ver Demo</a> · <a href="#%EF%B8%8F-características-clave">Características</a> · <a href="#-instalación">Instalación</a> </p>
 
-Tecnologías Utilizadas
-Este proyecto utiliza un stack de desarrollo moderno y escalable:
-
-Framework: Next.js (con App Router)
-
-Lenguaje: TypeScript
-
-Backend y Base de Datos: Supabase
-
-Base de Datos: PostgreSQL
-
-Autenticación: Supabase Auth
-
-Almacenamiento: Supabase Storage (para avatares, etc.)
-
-Estilos: Tailwind CSS
-
-Componentes UI: shadcn/ui
-
-Drag & Drop: @hello-pangea/dnd
-
-Iconos: Lucide React
+📖 Sobre el Proyecto
+Este proyecto es un foro web completo construido desde cero con el App Router de Next.js y Supabase como backend. La funcionalidad estrella es un Creador de Alineaciones interactivo que permite a los usuarios diseñar visualmente sus formaciones soñadas usando un sistema de drag-and-drop, para luego publicarlas y discutirlas con la comunidad.
