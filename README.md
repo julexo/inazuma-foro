@@ -1,8 +1,7 @@
-Aquí tienes un README.md con un estilo profesional y moderno, usando elementos de Markdown como badges, emojis y una estructura clara que lucirá genial en tu perfil de GitHub.
 
-Simplemente copia y pega todo el contenido de este bloque de código en el archivo README.md que está en la raíz de tu proyecto.
-
-<p align="center"> <img src="httpsGet-Image-from-Query:Icono-futbol-fuego-estilo-Inazuma" width="120" alt="Logo del Foro"> </p>
+<p align="center">
+  <img src="src/favicon.ico" width="120" alt="Logo del Foro">
+</p>
 
 <h1 align="center"> Inazuma Foro ⚡⚽ </h1>
 
