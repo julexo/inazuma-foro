@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+nazuma Foro ⚡
+Un foro web completo construido con Next.js y Supabase para los fans de Inazuma Eleven. El corazón del proyecto es un Creador de Alineaciones interactivo que permite a los usuarios diseñar, publicar y discutir sus formaciones y estrategias de equipo.
 
-## Getting Started
+Características Principales
+Autenticación de Usuarios: Sistema completo de registro e inicio de sesión gestionado por Supabase Auth.
 
-First, run the development server:
+Creación de Hilos: Los usuarios pueden crear nuevos hilos de discusión (alineaciones).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Constructor de Alineaciones: Una interfaz de Drag & Drop para arrastrar jugadores desde una base de datos a una formación en el campo.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Gestión de Perfiles: Tabla profiles conectada a la autenticación para gestionar roles y estados (como baneos).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Visualización de Hilos y Posts: Consulta de datos en tiempo real desde Supabase para mostrar las alineaciones y sus respuestas.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Seguridad: Implementación de Row Level Security (RLS) en Supabase para proteger los datos (ej: solo los usuarios pueden crear hilos, los usuarios baneados no pueden postear).
 
-## Learn More
+Tecnologías Utilizadas
+Este proyecto utiliza un stack de desarrollo moderno y escalable:
 
-To learn more about Next.js, take a look at the following resources:
+Framework: Next.js (con App Router)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Lenguaje: TypeScript
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Backend y Base de Datos: Supabase
 
-## Deploy on Vercel
+Base de Datos: PostgreSQL
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Autenticación: Supabase Auth
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Almacenamiento: Supabase Storage (para avatares, etc.)
+
+Estilos: Tailwind CSS
+
+Componentes UI: shadcn/ui
+
+Drag & Drop: @hello-pangea/dnd
+
+Iconos: Lucide React
