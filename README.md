@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="src/favicon.ico" width="120" alt="Logo del Foro">
+  <img src="public/logo.png" width="120" alt="Logo del Foro">
 </p>
 
 <h1 align="center"> Inazuma Foro ⚡⚽ </h1>
@@ -13,3 +13,34 @@
 
 📖 Sobre el Proyecto
 Este proyecto es un foro web completo construido desde cero con el App Router de Next.js y Supabase como backend. La funcionalidad estrella es un Creador de Alineaciones interactivo que permite a los usuarios diseñar visualmente sus formaciones soñadas usando un sistema de drag-and-drop, para luego publicarlas y discutirlas con la comunidad.
+
+✨ Características Clave
+⚡ Creador de Alineaciones: Interfaz de Drag & Drop para arrastrar jugadores desde una base de datos de jugadores a posiciones en el campo.
+
+🔐 Autenticación Segura: Sistema completo de registro e inicio de sesión gestionado por Supabase Auth.
+
+🛡️ Seguridad RLS: Implementación de Row Level Security (RLS) para un control granular de los permisos (ej: solo usuarios activos pueden postear, los admins pueden banear).
+
+✍️ Foros Dinámicos: Creación y visualización de hilos y posts, con datos obtenidos directamente de la base de datos PostgreSQL de Supabase.
+
+🎨 Diseño Moderno: Interfaz de usuario limpia y responsiva construida con Tailwind CSS y shadcn/ui.
+
+🔩 Base de Datos Relacional: Estructura de tablas (profiles, threads, posts) conectadas con claves foráneas para mantener la integridad de los datos.
+
+## 🚀 Stack Tecnológico
+
+* **Framework:** [Next.js (App Router)](https://nextjs.org/)
+* **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
+* **Backend (BaaS):** [Supabase](https://supabase.com/)
+    * **Base de Datos:** [PostgreSQL](https://www.postgresql.org/)
+    * **Autenticación:** [Supabase Auth](https://supabase.com/docs/guides/auth)
+    * **Seguridad:** [Row Level Security (RLS)](https://supabase.com/docs/guides/database/row-level-security)
+* **Estilos:** [Tailwind CSS](https://tailwindcss.com/)
+* **Componentes UI:** [shadcn/ui](https://ui.shadcn.com/)
+* **Drag & Drop:** [@hello-pangea/dnd](https://github.com/hello-pangea/dnd)
+* **Iconos:** [Lucide React](https://lucide.dev/)
+* **Control de Versiones:** [Git](https://git-scm.com/) & [GitHub](https://github.com/)
+
+
+
+<p align="center"> Creado con 🔥 y ⚽ por <a href="https://github.com/julexo">julexo</a> </p>
