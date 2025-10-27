@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="public/logo.png" width="120" alt="Logo del Foro">
+  <img src="src/app/icon0.svg" width="120" alt="Logo del Foro">
 </p>
 
 <h1 align="center"> Inazuma Foro ⚡⚽ </h1>
