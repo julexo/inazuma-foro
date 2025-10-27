@@ -1,40 +1,19 @@
 'use client'
-import {Auth} from '@supabase/auth-ui-react'
-import {ThemeSupa} from '@supabase/auth-ui-shared'
-import {supabase} from '@/lib/supabaseClient'
-import {useRouter} from 'next/navigation'
-import { useEffect } from 'react'
 
-export default function LoginPage(){
-    const router = useRouter()
+import LoginForm from '@/components/LoginForm' // Importa el nuevo formulario de Login
+import Link from 'next/link'
 
-    useEffect(() => {
-        const {data : {subscription} } = supabase.auth.onAuthStateChange((event)=>{
-            if(event === 'SIGNED_IN'){
-                router.push('/')
-                router.refresh()
-            }
-        })
-    return subscription.unsubscribe()
-    },[router])
-
-    return(
-        <div style = {{maxWidth : '460px', margin : '96px auto'}}>
-            <Auth 
-                supabaseClient={supabase}
-                appearance={{theme : ThemeSupa}}
-                providers={['github', 'google']}
-                redirectTo='http://localhost:3000'
-            />
-
-            <style>{`
-                .c-bOcPnF-cmFMMs-color-primary {
-                    background-color: white !important;
-                    border-color: orange;
-                    color: black;
-                }
-            `}</style>
-        </div>
-        
-    )
+export default function LoginPage() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-blue-900 to-orange-700">
+      <LoginForm /> {/* Renderiza el formulario de Login */}
+      <p className="mt-4 text-center text-sm text-white">
+        ¿No tienes cuenta?{' '}
+        <Link href="/signup" className="font-medium text-blue-600 hover:underline">
+          Regístrate aquí
+        </Link>
+      </p>
+    </div>
+  )
 }
+

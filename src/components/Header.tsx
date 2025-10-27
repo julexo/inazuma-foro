@@ -89,14 +89,13 @@ export default function Header() {
                 <LogIn size={18} />
                 Iniciar Sesión
               </Link>
-              {/* Botón Registrarse (del código que pasaste) */}
-              <Link
-                href="/login"
+                 <Link
+                href="/signup" // <-- Ruta Correcta
                 className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow-md transition-colors text-sm sm:text-base"
-              >
+                >
                 <User size={18} />
                 Registrarse
-              </Link>
+                </Link>
             </>
           )}
         </div>
