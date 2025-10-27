@@ -36,7 +36,7 @@ export function PlayerSidebar({ onDragStart }: PlayerSidebarProps) {
     return getPlayersByFilter(search, positionFilter, teamFilter, elementFilter);
   }, [search, positionFilter, teamFilter, elementFilter]);
 
-  // IDs únicos para las secciones de header y footer para calcular altura (si fuera necesario, pero no lo usaremos ahora)
+  
   const headerId = 'player-sidebar-header';
   const footerId = 'player-sidebar-footer';
 

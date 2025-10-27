@@ -18,7 +18,7 @@ export default function Header() {
           {/* 2. Añade el componente Image */}
           <Link href="/" className="flex items-center gap-3">
              <Image
-                src="/logo.png" 
+                src="/icon0.svg" 
                 alt="Logo Inazuma Foro"
                 width={40} 
                 height={40} 
