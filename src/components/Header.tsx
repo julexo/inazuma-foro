@@ -10,7 +10,7 @@ export default function Header() {
   
 
   return (
-    <header className="bg-white py-3 px-4 sm:px-6 lg:px-8 border-b border-gray-200 shadow-sm">
+    <header className="bg-blue-300 py-3 px-4 sm:px-6 lg:px-8 border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         
         {/* Logo y Título (Alineados a la izquierda) */}
