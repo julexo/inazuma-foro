@@ -77,7 +77,7 @@ const threads: Thread[] = rawThreads.map((thread: SupabaseThread) => { // <-- Ti
 });
 
   return (
-    <main className="min-h-screen bg-gray-50">
+     <main className="min-h-screen bg-gradient-to-br from-indigo-900 via-blue-900 to-orange-700"> 
       <Header /> {/* El banner superior */}
 
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">

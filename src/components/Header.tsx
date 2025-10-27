@@ -1,36 +1,36 @@
-// src/components/Header.tsx
-
 import { Plus, LogIn, User } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image' 
+import Image from 'next/image'
 
 export default function Header() {
- 
+  // --- Lógica de Autenticación (Reemplaza con tu lógica real) ---
   const isLoggedIn = false;
-  
+  // --- ---
 
   return (
-    <header className="bg-blue-300 py-3 px-4 sm:px-6 lg:px-8 border-b border-gray-200 shadow-sm">
+    // Estilos del header oscuro y semi-transparente
+    <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-sm py-3 px-4 sm:px-6 lg:px-8 border-b border-slate-700/50 shadow-sm">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        
-        {/* Logo y Título (Alineados a la izquierda) */}
+
+        {/* Logo y Título */}
         <div className="flex items-center gap-3">
-          {/* 2. Añade el componente Image */}
           <Link href="/" className="flex items-center gap-3">
              <Image
-                src="/icon0.svg" 
-                alt="Logo Inazuma Foro"
-                width={40} 
-                height={40} 
-                className="h-25 w-25" 
+                src="/icon0.svg" // Asegúrate que este archivo exista en /public
+                alt="Logo Victory Road Foro"
+                width={40}
+                height={40}
+                // Corregido: Clases de tamaño estándar de Tailwind (10 = 2.5rem = 40px)
+                className="h-25 w-25"
              />
-             <span className="text-xl sm:text-2xl font-bold text-slate-900 hover:text-blue-600 transition-colors hidden sm:block">
+             {/* Corregido: Colores de texto para fondo oscuro */}
+             <span className="text-xl sm:text-2xl font-bold text-slate-100 hover:text-sky-300 transition-colors hidden sm:block">
                 Victory Road Foro
              </span>
           </Link>
         </div>
 
-        {/* Grupo de Botones (Alineados a la derecha) */}
+        {/* Grupo de Botones */}
         <div className="flex items-center gap-2 sm:gap-3">
           {isLoggedIn ? (
             // --- Botones si el usuario SÍ está logueado ---
@@ -47,13 +47,15 @@ export default function Header() {
           ) : (
             // --- Botones si el usuario NO está logueado ---
             <>
+              {/* Botón Iniciar Sesión adaptado */}
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 bg-white border border-blue-400 text-blue-600 hover:bg-blue-50 font-semibold py-2 px-3 sm:px-4 rounded-lg shadow-sm transition-colors text-sm sm:text-base"
+                className="inline-flex items-center gap-2 bg-slate-700/50 border border-slate-600 text-slate-200 hover:bg-slate-700 hover:text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow-sm transition-colors text-sm sm:text-base"
               >
                 <LogIn size={18} />
                 Iniciar Sesión
               </Link>
+              {/* Botón Registrarse adaptado */}
               <Link
                 href="/login"
                 className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow-md transition-colors text-sm sm:text-base"
@@ -61,16 +63,8 @@ export default function Header() {
                 <User size={18} />
                 Registrarse
               </Link>
-
-              <Link
-                href="/threads/new"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow-md transition-colors text-sm sm:text-base"
-              >
-                <Plus size={18} />
-                Crear Hilo
-              </Link>
+              {/* Corregido: Botón "Crear Hilo" duplicado eliminado de aquí */}
             </>
-
           )}
         </div>
       </div>
