@@ -9,7 +9,7 @@ export default function Header() {
 
   return (
     // Estilos del header oscuro y semi-transparente
-    <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-sm py-3 px-4 sm:px-6 lg:px-8 border-b border-slate-700/50 shadow-sm">
+    <header className="sticky top-0 z-50 bg-gradient-to-b from-indigo-900/90 via-indigo-800/85 to-indigo-950/90 backdrop-blur-sm py-3 px-4 sm:px-6 lg:px-8 border-b border-b-indigo-950/50 shadow-lg">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
 
         {/* Logo y Título */}
