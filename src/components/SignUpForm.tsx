@@ -32,31 +32,26 @@ export default function SignUpForm() {
         return;
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-      options: {
-        // Aquí pasamos los datos adicionales que leerá el Trigger
-        data: {
-          username: username,
-          first_name: firstName, // O usa camelCase: firstName
-          last_name: lastName    // O usa camelCase: lastName
-        }
-        // emailRedirectTo: `${location.origin}/`, // Descomenta si usas confirmación
-      }
-    });
+   const { data: signUpData, error } = await supabase.auth.signUp({
+  email: email,
+  password: password,
+  options: {
+    // 👇 ¡ASEGÚRATE DE QUE ESTO ESTÉ AQUÍ Y LOS NOMBRES COINCIDAN CON EL TRIGGER! 👇
+    data: {
+      username: username, // <- Debe coincidir con ->> 'username' en el trigger
+      firstName: firstName, // <- Debe coincidir con ->> 'firstName' en el trigger
+      lastName: lastName    // <- Debe coincidir con ->> 'lastName' en el trigger
+    }
+  }
+  });
 
     if (error) {
       setError(error.message);
-    } else if (data.user && data.user.identities?.length === 0) {
+    } else if (signUpData.user ) {
        // Si Supabase requiere confirmación de email
+       router.push('/login');
        setMessage("¡Registro casi listo! Revisa tu correo electrónico para confirmar tu cuenta.");
-    } else if (data.user) {
-       // Si la confirmación no está habilitada o ya está confirmado
-       setMessage("¡Registro completado! Ahora puedes iniciar sesión.");
-       // Podrías redirigir al login o directamente a la home si el registro auto-loguea
-       // router.push('/login');
-    } else {
+    }  else {
         setError("Ha ocurrido un error inesperado durante el registro.")
     }
     setLoading(false);

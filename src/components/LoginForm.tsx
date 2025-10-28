@@ -30,7 +30,7 @@ export default function LoginForm() {
     } else {
       // El onAuthStateChange en AuthContext/layout.tsx se encargará de redirigir
       // Opcionalmente, puedes forzar un refresh o push aquí si es necesario
-      // router.push('/'); // Ya no es estrictamente necesario aquí
+      router.push('/'); // Ya no es estrictamente necesario aquí
       router.refresh(); // Forzamos refresh para asegurar que el layout detecte el cambio
     }
     // setLoading(false); // No necesitamos esto aquí si hay redirección/refresh
