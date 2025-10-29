@@ -6,9 +6,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Search, Flame, Wind, TreePine, Mountain } from 'lucide-react';
-import { getPlayersByFilter, teams, elements, positions, PlayerData } from '@/lib/PlayerDataBase'; // Asegúrate que la ruta es correcta
+import { teams, elements, positions, PlayerData } from '@/lib/PlayerDataBase';
 
 interface PlayerSidebarProps {
+  availablePlayers: PlayerData[];
   onDragStart: (player: PlayerData) => void;
 }
 
@@ -26,25 +27,30 @@ const elementColors = {
   Montaña: 'bg-amber-700 text-white',
 };
 
-export function PlayerSidebar({ onDragStart }: PlayerSidebarProps) {
+export function PlayerSidebar({ availablePlayers, onDragStart }: PlayerSidebarProps) {
   const [search, setSearch] = useState('');
   const [positionFilter, setPositionFilter] = useState('all');
   const [teamFilter, setTeamFilter] = useState('all');
   const [elementFilter, setElementFilter] = useState('all');
 
   const filteredPlayers = useMemo(() => {
-    return getPlayersByFilter(search, positionFilter, teamFilter, elementFilter);
-  }, [search, positionFilter, teamFilter, elementFilter]);
+    return availablePlayers.filter(player => {
+      const matchesSearch = player.name.toLowerCase().includes(search.toLowerCase());
+      const matchesPosition = positionFilter === 'all' || player.position === positionFilter;
+      const matchesTeam = teamFilter === 'all' || player.team === teamFilter;
+      const matchesElement = elementFilter === 'all' || player.element === elementFilter;
 
-  
+      return matchesSearch && matchesPosition && matchesTeam && matchesElement;
+    });
+  }, [availablePlayers, search, positionFilter, teamFilter, elementFilter]);
+
   const headerId = 'player-sidebar-header';
   const footerId = 'player-sidebar-footer';
 
   return (
-   
     <div className="h-full flex flex-col bg-white/95 backdrop-blur-sm rounded-lg border-2 border-sky-200 shadow-lg overflow-hidden relative">
       {/* Sección Header (altura automática) */}
-      <div id={headerId} className="p-4 border-b border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 shrink-0"> {/* shrink-0 evita que se encoja */}
+      <div id={headerId} className="p-4 border-b border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 shrink-0">
         <h3 className="text-sky-900 mb-4">Jugadores Disponibles</h3>
         {/* Search */}
         <div className="space-y-2 mb-3">
@@ -64,25 +70,25 @@ export function PlayerSidebar({ onDragStart }: PlayerSidebarProps) {
         <div className="grid grid-cols-2 gap-2">
           {/* Posición */}
           <div className="space-y-1">
-             <Label htmlFor="position" className="text-xs">Posición</Label>
-             <Select value={positionFilter} onValueChange={setPositionFilter}>
-                <SelectTrigger id="position"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                   <SelectItem value="all">Todas</SelectItem>
-                   {positions.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
-                </SelectContent>
-             </Select>
+            <Label htmlFor="position" className="text-xs">Posición</Label>
+            <Select value={positionFilter} onValueChange={setPositionFilter}>
+              <SelectTrigger id="position"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {positions.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           {/* Elemento */}
           <div className="space-y-1">
-             <Label htmlFor="element" className="text-xs">Elemento</Label>
-             <Select value={elementFilter} onValueChange={setElementFilter}>
-               <SelectTrigger id="element"><SelectValue /></SelectTrigger>
-               <SelectContent>
-                 <SelectItem value="all">Todos</SelectItem>
-                 {elements.map(elem => <SelectItem key={elem} value={elem}>{elem}</SelectItem>)}
-               </SelectContent>
-             </Select>
+            <Label htmlFor="element" className="text-xs">Elemento</Label>
+            <Select value={elementFilter} onValueChange={setElementFilter}>
+              <SelectTrigger id="element"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {elements.map(elem => <SelectItem key={elem} value={elem}>{elem}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           {/* Equipo */}
           <div className="space-y-1 col-span-2">
@@ -98,10 +104,8 @@ export function PlayerSidebar({ onDragStart }: PlayerSidebarProps) {
         </div>
       </div>
 
-     
-    
-      <div className="absolute top-[230px] bottom-[40px] left-0 right-0 overflow-hidden"> 
-        <ScrollArea className="h-full w-full"> 
+      <div className="absolute top-[230px] bottom-[40px] left-0 right-0 overflow-hidden">
+        <ScrollArea className="h-full w-full">
           <div className="p-4 space-y-2">
             {filteredPlayers.length === 0 ? (
               <p className="text-center text-muted-foreground text-sm py-8">
@@ -140,8 +144,7 @@ export function PlayerSidebar({ onDragStart }: PlayerSidebarProps) {
         </ScrollArea>
       </div>
 
-     
-      <div id={footerId} className="absolute bottom-0 left-0 right-0 p-3 border-t border-sky-200 bg-sky-50 text-xs text-sky-700 text-center shrink-0"> {/* shrink-0 */}
+      <div id={footerId} className="absolute bottom-0 left-0 right-0 p-3 border-t border-sky-200 bg-sky-50 text-xs text-sky-700 text-center shrink-0">
         {filteredPlayers.length} jugador{filteredPlayers.length !== 1 ? 'es' : ''}
       </div>
     </div>
