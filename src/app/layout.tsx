@@ -37,8 +37,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           {children}
+          <Analytics /> 
         </AuthProvider>
-        <Analytics /> {/* <-- Paso 2.2: Añade el componente aquí */}
+        
       </body>
     </html>
   );

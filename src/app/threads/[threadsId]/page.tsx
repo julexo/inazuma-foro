@@ -65,7 +65,7 @@ export default async function ThreadPage({ params }: { params: { threadId: strin
 
   // 3. Renderizar el nuevo ThreadDetail
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-900 via-blue-900 to-orange-700">
+    <main className="min-h-screen bg-gray-50">
       <Header />
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <ThreadDetail
