@@ -87,8 +87,7 @@ const threads: Thread[] = rawThreads.map((thread: SupabaseThread) => { // <-- Ti
         <ThreadList
           threads={threads}
           // Como estamos en un Server Component, estas funciones deben ser dummy
-          onThreadClick={() => { }}
-          onToggleLike={() => { }}
+          
         />
       </div>
     </main>

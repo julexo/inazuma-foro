@@ -32,6 +32,8 @@ const defaultFormation: Formation = {
 };
 
 export default function NewThreadPage() {
+
+  const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('') // Añadimos un campo de contenido
   const [formation, setFormation] = useState<Formation>(defaultFormation)
@@ -39,6 +41,9 @@ export default function NewThreadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    setLoading(true); 
+    
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -78,7 +83,7 @@ export default function NewThreadPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl py-8">
+    <div className="container mx-auto max-w-6xl py-8" >
       <form onSubmit={handleSubmit} className="space-y-6">
         <h1 className="text-3xl font-bold">Crear Nueva Alineación</h1>
         
