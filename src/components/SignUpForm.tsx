@@ -27,32 +27,56 @@ export default function SignUpForm() {
 
     // Validación básica de campos
     if (!firstName || !lastName || !username || !email || !password) {
-        setError("Todos los campos son obligatorios.");
-        setLoading(false);
-        return;
+      setError("Todos los campos son obligatorios.");
+      setLoading(false);
+      return;
     }
 
-   const { data: signUpData, error } = await supabase.auth.signUp({
-  email: email,
-  password: password,
-  options: {
-    // 👇 ¡ASEGÚRATE DE QUE ESTO ESTÉ AQUÍ Y LOS NOMBRES COINCIDAN CON EL TRIGGER! 👇
-    data: {
-      username: username, // <- Debe coincidir con ->> 'username' en el trigger
-      firstName: firstName, // <- Debe coincidir con ->> 'firstName' en el trigger
-      lastName: lastName    // <- Debe coincidir con ->> 'lastName' en el trigger
-    }
-  }
+    // Validar si el email ya existe en Supabase Auth
+try {
+  const res = await fetch('/api/check-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
   });
 
+  const { exists } = await res.json();
+
+  if (exists) {
+    setError('Este correo ya está registrado o pendiente de confirmación.');
+    setLoading(false);
+    return; // detenemos el flujo
+  }
+} catch (err) {
+  console.error('Error verificando email:', err);
+}
+
+
+    const { data: signUpData, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          username: username, // <- Debe coincidir con ->> 'username' en el trigger
+          firstName: firstName, // <- Debe coincidir con ->> 'firstName' en el trigger
+          lastName: lastName    // <- Debe coincidir con ->> 'lastName' en el trigger
+        }
+      }
+    });
+
+    setLoading(false);
+
     if (error) {
-      setError(error.message);
-    } else if (signUpData.user ) {
-       // Si Supabase requiere confirmación de email
-       router.push('/login');
-       setMessage("¡Registro casi listo! Revisa tu correo electrónico para confirmar tu cuenta.");
-    }  else {
-        setError("Ha ocurrido un error inesperado durante el registro.")
+      if (error) {
+        console.error("Error de Supabase signUp:", error); // <-- Añade esto
+        setError(error.message);
+      }
+    } else if (signUpData.user) {
+      // Si Supabase requiere confirmación de email
+      router.push('/login');
+      setMessage("¡Registro casi listo! Revisa tu correo electrónico para confirmar tu cuenta.");
+    } else {
+      setError("Ha ocurrido un error inesperado durante el registro.")
     }
     setLoading(false);
   };
@@ -75,20 +99,20 @@ export default function SignUpForm() {
         )}
         {/* Mensaje informativo */}
         {message && (
-           <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative" role="alert">
-             {message}
-           </div>
+          <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative" role="alert">
+            {message}
+          </div>
         )}
         {/* Campos del formulario */}
         <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-                <Label htmlFor="first-name">Nombre</Label>
-                <Input id="first-name" placeholder="Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={loading} />
-            </div>
-            <div className="grid gap-2">
-                <Label htmlFor="last-name">Apellidos</Label>
-                <Input id="last-name" placeholder="Last name" required value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={loading} />
-            </div>
+          <div className="grid gap-2">
+            <Label htmlFor="first-name">Nombre</Label>
+            <Input id="first-name" placeholder="Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={loading} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="last-name">Apellidos</Label>
+            <Input id="last-name" placeholder="Last name" required value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={loading} />
+          </div>
         </div>
         <div className="grid gap-2">
           <Label htmlFor="username">Nombre de Usuario</Label>
@@ -96,11 +120,11 @@ export default function SignUpForm() {
         </div>
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="tu@email.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading}/>
+          <Input id="email" type="email" placeholder="tu@email.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="password">Contraseña</Label>
-          <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading}/>
+          <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
         </div>
       </CardContent>
       <CardFooter>
