@@ -29,7 +29,6 @@ export default function RootLayout({
     <html lang="es"> 
       <head>
         <meta name="apple-mobile-web-app-title" content="VRF" />
-       
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
