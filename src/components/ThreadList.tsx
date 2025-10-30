@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Eye, Heart } from 'lucide-react';
+import { Eye, Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation'; // <--- Importa useRouter
 
 interface ThreadListProps {

@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react';
-import { Formation, Player, PlayerData } from '@/types'; // Importa PlayerData
+import { Formation, PlayerData } from '@/types';
 import { PlayerSidebar } from './PlayerSidebar';
-// Importa la base de datos completa
-import { playersDatabase, getPlayersByFilter } from '@/lib/PlayerDataBase'; 
+import { playersDatabase } from '@/lib/PlayerDataBase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Trash2, AlertCircle } from 'lucide-react';
@@ -88,9 +87,6 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
   };
 
   const handleRemovePlayer = (slotId: number) => {
-    // Obtenemos el jugador que vamos a quitar para devolverlo a la lista
-    const playerToRemove = formation.players.find(p => p.id === slotId)?.playerData;
-
     const updatedPlayers = formation.players.map(player =>
       player.id === slotId
         ? {
@@ -101,9 +97,6 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
         : player
     );
     onFormationChange({ ...formation, players: updatedPlayers });
-
-    // Al quitarlo de 'formation.players', 'usedPlayerIds' se recalculará
-    // y 'availablePlayers' incluirá automáticamente a 'playerToRemove'.
   };
 
   const getDefaultName = (id: number): string => { // Añadido tipo de retorno

@@ -80,6 +80,7 @@ export default function NewThreadPage() {
       router.push('/')
       router.refresh()
     }
+    setLoading(false) // Añadir esto para desactivar el estado de carga
   }
 
   return (
@@ -118,8 +119,13 @@ export default function NewThreadPage() {
            />
         </div>
 
-        <Button type="submit" size="lg" className="w-full">
-          Publicar Hilo
+        <Button 
+          type="submit" 
+          size="lg" 
+          className="w-full"
+          disabled={loading}
+        >
+          {loading ? 'Publicando...' : 'Publicar Hilo'}
         </Button>
       </form>
     </div>

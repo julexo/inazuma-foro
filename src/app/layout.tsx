@@ -26,11 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es"> {/* Cambiado a 'es' */}
+    <html lang="es"> 
       <head>
-        {/* Aquí van tus meta tags y links de favicon generados */}
         <meta name="apple-mobile-web-app-title" content="VRF" />
-        {/* ... (otras etiquetas <link> y <meta> si las tienes) ... */}
+       
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
