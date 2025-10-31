@@ -6,7 +6,7 @@ import { PlayerSidebar } from './PlayerSidebar';
 import { playersDatabase } from '@/lib/PlayerDataBase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Trash2, AlertCircle } from 'lucide-react';
+import { Trash2, AlertCircle, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface DragDropFormationBuilderProps {
@@ -124,7 +124,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
   `;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[600px]">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[700px]">
       <div className="lg:col-span-1 h-full overflow-hidden">
         <PlayerSidebar
           availablePlayers={availablePlayers}
@@ -133,24 +133,29 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
       </div>
 
       <div className="lg:col-span-3 space-y-4">
-        {/* Mostrar error si existe */}
+        {/* Mensaje de error mejorado */}
         {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="bg-red-900/40 backdrop-blur-sm border border-red-500/50 text-red-200 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg animate-in slide-in-from-top-2" role="alert">
+            <div className="p-2 rounded-lg bg-red-500/20">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <p className="text-sm font-medium">{error}</p>
+          </div>
         )}
 
-        <Alert className="border-sky-200 bg-sky-50">
-          <AlertCircle className="h-4 w-4 text-sky-600" />
-          <AlertDescription className="text-sky-800">
+        {/* Mensaje informativo mejorado */}
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-sky-500/30 text-slate-200 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg">
+          <div className="p-2 rounded-lg bg-sky-500/20">
+            <Info className="h-5 w-5 text-sky-400" />
+          </div>
+          <p className="text-sm">
             Arrastra jugadores desde el panel lateral hacia las posiciones en el campo.
-          </AlertDescription>
-        </Alert>
+          </p>
+        </div>
 
-        {/* Campo de juego existente */}
+        {/* Campo de juego */}
         <div
-          className="relative w-full aspect-[3/2] bg-gradient-to-b from-green-600 to-green-700 rounded-lg overflow-hidden"
+          className="relative w-full h-[500px] bg-gradient-to-b from-green-600 to-green-700 rounded-lg overflow-hidden"
           onClick={handleFieldClick}
         >
           {/* SVG existente */}
@@ -217,17 +222,25 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
            })}
         </div>
 
-        {/* Player count existente */}
-        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-           <span className="text-blue-900">
-             Jugadores asignados: {formation.players.filter(p => p.playerData).length} / 11
-           </span>
-           {formation.players.filter(p => p.playerData).length === 11 && (
-             <span className="text-green-600 flex items-center gap-1">
-               ✓ Alineación completa
-             </span>
-           )}
-         </div>
+        {/* Contador de jugadores mejorado */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 shadow-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-slate-700/50">
+                <Info className="h-5 w-5 text-slate-400" />
+              </div>
+              <span className="text-slate-300 text-sm">
+                Jugadores asignados: <span className="font-semibold text-white">{formation.players.filter(p => p.playerData).length} / 11</span>
+              </span>
+            </div>
+            {formation.players.filter(p => p.playerData).length === 11 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30">
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="text-sm font-medium">Alineación completa</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

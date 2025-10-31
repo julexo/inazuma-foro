@@ -77,18 +77,32 @@ const threads: Thread[] = rawThreads.map((thread: SupabaseThread) => { // <-- Ti
 });
 
   return (
-     <main className="min-h-screen bg-gradient-to-br from-indigo-900 via-blue-900 to-orange-700"> 
-      <Header /> {/* El banner superior */}
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-orange-800">
+      <div className="relative">
+        {/* Efecto de brillo en el fondo */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 via-transparent to-blue-500/10 pointer-events-none" />
+        
+        <Header />
 
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <FilterBox /> {/* Los filtros de búsqueda */}
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 relative">
+          {/* Contenedor principal con efecto glassmorphism */}
+          <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-700/50 shadow-xl p-6 space-y-6">
+            {/* Sección de filtros */}
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+              <FilterBox />
+            </div>
 
-        {/* 3. Renderizamos el nuevo ThreadList con los datos adaptados */}
-        <ThreadList
-          threads={threads}
-          // Como estamos en un Server Component, estas funciones deben ser dummy
-          
-        />
+            {/* Lista de hilos */}
+            <div className="relative">
+              {/* Efecto de brillo superior */}
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-orange-500/20 blur-2xl" />
+              
+              <ThreadList
+                threads={threads}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   )

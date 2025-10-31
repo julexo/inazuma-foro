@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, UserPlus, User, Mail, Lock } from 'lucide-react'
 
 export default function SignUpForm() {
   const [email, setEmail] = useState('')
@@ -19,6 +19,11 @@ export default function SignUpForm() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleSignUp();
+  };
 
   const handleSignUp = async () => {
     setError(null);
@@ -73,7 +78,7 @@ try {
       }
     } else if (signUpData.user) {
       // Si Supabase requiere confirmación de email
-      router.push('/login');
+      router.push('/login?verify=true');
       setMessage("¡Registro casi listo! Revisa tu correo electrónico para confirmar tu cuenta.");
     } else {
       setError("Ha ocurrido un error inesperado durante el registro.")
@@ -82,57 +87,131 @@ try {
   };
 
   return (
-    <Card className="w-full max-w-md"> {/* Aumentamos un poco el tamaño */}
-      <CardHeader>
-        <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
-        <CardDescription>
-          Rellena los campos para registrarte en el foro.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        {/* Mensaje de error */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative flex items-center gap-2" role="alert">
-            <AlertCircle className="h-4 w-4" />
-            <span className="block sm:inline">{error}</span>
+    <Card className="w-full max-w-md bg-slate-800/50 backdrop-blur-sm border-slate-700/50 shadow-xl">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <CardHeader className="space-y-3 pb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-orange-500/20">
+              <UserPlus className="h-6 w-6 text-orange-400" />
+            </div>
+            <CardTitle className="text-2xl bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+              Crear Cuenta
+            </CardTitle>
           </div>
-        )}
-        {/* Mensaje informativo */}
-        {message && (
-          <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative" role="alert">
-            {message}
+          <CardDescription className="text-slate-400">
+            Rellena los campos para registrarte en el foro.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="grid gap-4">
+          {error && (
+            <div className="bg-red-900/40 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg flex items-center gap-3 animate-in slide-in-from-top-2" role="alert">
+              <div className="p-2 rounded-lg bg-red-500/20">
+                <AlertCircle className="h-4 w-4" />
+              </div>
+              <span className="text-sm font-medium">{error}</span>
+            </div>
+          )}
+
+          {message && (
+            <div className="bg-blue-900/40 border border-blue-500/50 text-blue-200 px-4 py-3 rounded-lg flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/20">
+                <Mail className="h-4 w-4" />
+              </div>
+              <span className="text-sm font-medium">{message}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="first-name" className="text-slate-200">Nombre</Label>
+              <Input 
+                id="first-name" 
+                placeholder="Tu nombre" 
+                required 
+                value={firstName} 
+                onChange={(e) => setFirstName(e.target.value)} 
+                disabled={loading}
+                className="bg-slate-900/50 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="last-name" className="text-slate-200">Apellidos</Label>
+              <Input 
+                id="last-name" 
+                placeholder="Tus apellidos" 
+                required 
+                value={lastName} 
+                onChange={(e) => setLastName(e.target.value)} 
+                disabled={loading}
+                className="bg-slate-900/50 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
+              />
+            </div>
           </div>
-        )}
-        {/* Campos del formulario */}
-        <div className="grid grid-cols-2 gap-4">
+
           <div className="grid gap-2">
-            <Label htmlFor="first-name">Nombre</Label>
-            <Input id="first-name" placeholder="Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={loading} />
+            <Label htmlFor="username" className="text-slate-200">Nombre de Usuario</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input 
+                id="username" 
+                placeholder="Username" 
+                required 
+                value={username} 
+                onChange={(e) => setUsername(e.target.value)} 
+                disabled={loading}
+                className="pl-9 bg-slate-900/50 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="email" className="text-slate-200">Email</Label>
+            <Input 
+              id="email" 
+              type="email" 
+              placeholder="tu@email.com" 
+              required 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              disabled={loading}
+              className="bg-slate-900/50 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
+            />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="last-name">Apellidos</Label>
-            <Input id="last-name" placeholder="Last name" required value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={loading} />
+            <Label htmlFor="password" className="text-slate-200">Contraseña</Label>
+            <Input 
+              id="password" 
+              type="password" 
+              required 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              disabled={loading}
+              className="bg-slate-900/50 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
+            />
           </div>
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="username">Nombre de Usuario</Label>
-          <Input id="username" placeholder="Username" required value={username} onChange={(e) => setUsername(e.target.value)} disabled={loading} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="tu@email.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="password">Contraseña</Label>
-          <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={handleSignUp} className="w-full" disabled={loading}>
-          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Registrarse
-        </Button>
-      </CardFooter>
+        </CardContent>
+
+        <CardFooter className="pt-2">
+          <Button 
+            type="submit"
+            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span>Creando cuenta...</span>
+              </>
+            ) : (
+              <>
+                <UserPlus className="mr-2 h-4 w-4" />
+                <span>Crear Cuenta</span>
+              </>
+            )}
+          </Button>
+        </CardFooter>
+      </form>
     </Card>
   );
 }

@@ -154,11 +154,13 @@ export default function NewThreadPage() {
 
             <div className="space-y-4">
               <Label className="text-lg text-slate-200">Diseña tu Alineación</Label>
-              <div className="bg-slate-900/30 rounded-lg p-4">
+              <div className="relative bg-slate-900/30 rounded-xl p-4 ring-1 ring-slate-700/50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)] overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/50 via-transparent to-slate-900/50 pointer-events-none" />
                 <DragDropFormationBuilder 
                   formation={formation}
                   onFormationChange={setFormation}
                 />
+                <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-xl pointer-events-none" />
               </div>
             </div>
           </div>
