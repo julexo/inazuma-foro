@@ -6,7 +6,12 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button' // Importamos Button para Logout
 import { useAuth } from '@/context/AuthContext' // Importa el hook useAuth
 
-export default function Header() {
+interface HeaderProps {
+  pageTitle?: string; // Hacemos pageTitle opcional (string o undefined)
+}
+
+
+export default function Header({ pageTitle }: HeaderProps) {
   // Usa el hook para obtener el estado de autenticación
   const { user, signOut, loading } = useAuth();
 

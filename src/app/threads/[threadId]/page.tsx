@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Thread, Reply, Formation, PlayerData } from '@/types';
+import { Thread, Reply, Formation } from '@/types'; // Quitamos PlayerData (no se usa aquí)
 import { useAuth } from '@/context/AuthContext';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
@@ -17,18 +17,18 @@ type SupabaseThreadData = {
   content: string;
   created_at: string;
   formation_data: Formation;
-  // 🚨 CORRECCIÓN: El join SIEMPRE es un array, incluso con .single()
+  // El join de Supabase SIEMPRE devuelve un array
   profiles: ({ 
     username: string;
     avatar_url: string | null;
-  }[] | null); // <-- Debe ser un array
+  }[] | null); 
 }
 
 type SupabasePostData = {
   id: number;
   content: string;
   created_at: string;
-  formation_data: Formation | null;
+  formation_data: Formation | null; // La columna que acabamos de añadir
   profiles: ({ 
     username: string;
     avatar_url: string | null;
@@ -41,7 +41,9 @@ export default function ThreadPage() {
   const { user } = useAuth();
   const params = useParams();
   const router = useRouter();
-  const threadId = params.threadId as string;
+  
+  // Asumiendo que tu carpeta es [threadId] (minúscula i)
+  const threadId = params.threadId as string; 
 
   const [thread, setThread] = useState<Thread | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,19 +53,14 @@ export default function ThreadPage() {
       setLoading(false);
       return;
     }
-    console.log("Fetching data for thread ID:", threadId); 
-
     setLoading(true);
     
-    // Consulta COMPLETA (con el join a profiles)
+    // Consulta del Hilo (limpia)
     const { data: threadData, error: threadError } = await supabase
       .from('threads')
-      .select(`
-        id, title, content, created_at, formation_data,
-        profiles ( username, avatar_url ) 
-      `)
+      .select('id, title, content, created_at, formation_data, profiles(username, avatar_url)')
       .eq('id', threadId)
-      .single(); // .single() devuelve un objeto para el join
+      .single(); 
 
     if (threadError) {
       console.error("Error fetching thread:", threadError); 
@@ -71,15 +68,10 @@ export default function ThreadPage() {
       return;
     }
 
-    console.log("Thread data fetched:", threadData); 
-
-    // B. Cargar las respuestas (Restaurado también)
+    // Consulta de Posts/Comentarios (limpia)
     const { data: postsData, error: postsError } = await supabase
       .from('post')
-      .select(`
-        id, content, created_at, formation_data,
-        profiles ( username, avatar_url )
-      `) 
+      .select('id, content, created_at, formation_data, profiles(username, avatar_url)') // Pedimos la nueva columna
       .eq('thread_id', threadId)
       .order('created_at', { ascending: true });
     
@@ -87,10 +79,9 @@ export default function ThreadPage() {
       console.error("Error fetching replies:", postsError);
     }
 
-    // C. Adaptar los datos
+    // Adaptar los datos de Posts
     let adaptedReplies: Reply[] = [];
     if (postsData) {
-      // post.profiles ES UN ARRAY, usamos [0]
       adaptedReplies = (postsData as SupabasePostData[]).map(post => {
         const profile = post.profiles ? post.profiles[0] : null; 
         return {
@@ -98,26 +89,26 @@ export default function ThreadPage() {
           content: post.content || '',
           author: profile?.username || 'Anónimo', 
           authorAvatar: profile?.avatar_url || '/default-avatar.png', 
-          formation: post.formation_data || undefined,
+          formation: post.formation_data || undefined, // Añadimos la formación si existe
           timestamp: new Date(post.created_at),
         };
       });
     }
 
+    // Adaptar los datos del Hilo
     if (threadData) {
-      // 🚨 CORRECCIÓN: threadData.profiles ES UN ARRAY, usamos [0]
       const data = threadData as SupabaseThreadData; 
-      const profile = data.profiles ? data.profiles[0] : null; // Acceso con [0]
+      const profile = data.profiles ? data.profiles[0] : null;
       
       setThread({
         id: data.id,
         title: data.title,
         content: data.content || '',
-        author: profile?.username || 'Anónimo', // Usamos el perfil extraído
-        authorAvatar: profile?.avatar_url || '/default-avatar.png', // Usamos el perfil extraído
+        author: profile?.username || 'Anónimo', 
+        authorAvatar: profile?.avatar_url || '/default-avatar.png', 
         formation: data.formation_data || { name: 'N/A', players: [] },
         timestamp: new Date(data.created_at),
-        replies: adaptedReplies,
+        replies: adaptedReplies, // Inyectamos los comentarios adaptados
         views: 0, 
         likes: 0, 
       });
@@ -126,8 +117,6 @@ export default function ThreadPage() {
     setLoading(false);
   }
 
-  // ... (useEffect y handleAddReply sin cambios) ...
-// --- 2. LLAMAR A LA FUNCIÓN DE CARGA ---
   useEffect(() => {
     fetchThreadAndReplies();
   }, [threadId]);
@@ -140,11 +129,12 @@ export default function ThreadPage() {
       return;
     }
     
+    // 🚨 CAMBIO AQUÍ: Añadimos 'formation_data' a la inserción
     const { data, error } = await supabase
       .from('post')
       .insert({
         content: reply.content,     
-        formation_data: reply.formation, 
+        formation_data: reply.formation, // <-- Se añade la alineación
         thread_id: threadId,        
         user_id: user.id,           
       })
@@ -153,11 +143,12 @@ export default function ThreadPage() {
     if (error) {
       alert("Error al publicar la respuesta: " + error.message);
     } else if (data) {
+      // Si funciona, volvemos a cargar todo para mostrar el nuevo comentario
       await fetchThreadAndReplies();
     }
   };
-  // ... (Renderizado de la página sin cambios) ...
-// --- 4. RENDERIZADO DE LA PÁGINA ---
+
+  // --- 4. RENDERIZADO DE LA PÁGINA ---
   if (loading && !thread) { // Carga inicial
     return (
       <main className="min-h-screen bg-gradient-to-br from-indigo-900 via-blue-900 to-orange-700">
@@ -174,7 +165,7 @@ export default function ThreadPage() {
       <main className="min-h-screen bg-gradient-to-br from-indigo-900 via-blue-900 to-orange-700">
         <Header />
         <p className="text-center text-white text-lg p-10">
-          Hilo no encontrado. (ID buscado: {threadId}) {/* Añadido ID para depurar */}
+          Hilo no encontrado. (ID buscado: {threadId}) 
           <Link href="/" className="text-sky-300 hover:underline ml-2">Volver al inicio</Link>
         </p>
       </main>
@@ -184,7 +175,11 @@ export default function ThreadPage() {
   // Si todo está bien, muestra el Hilo y sus Comentarios
   return (
     <main className="min-h-screen bg-gradient-to-br from-indigo-900 via-blue-900 to-orange-700">
-      <Header />
+      {/* Pasamos un 'pageTitle' personalizado al Header.
+        ¡Asegúrate de que tu Header.tsx esté preparado para recibir esta prop!
+      */}
+      <Header pageTitle={thread.title} />
+
       <div className="container mx-auto px-4 py-8">
         <ThreadDetail
           thread={thread}
