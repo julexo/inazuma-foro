@@ -194,7 +194,7 @@ export const playersDatabase: PlayerData[] = [
   { id: 'Caleb Stonewall', name: 'Caleb Stonewall', position: 'Mediocampo', team: ['Inazuma National'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
 
   //Inazuma Legends National
-  { id: 'Mark Evans', name: 'Mark Evans', position: 'Portero', team: ['Inazuma Legends National'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MarkEvans&backgroundColor=0ea5e9' },
+  { id: 'Mark Evans A', name: 'Mark Evans', position: 'Portero', team: ['Inazuma Legends National'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MarkEvans&backgroundColor=0ea5e9' },
   { id: 'Jack Wallside A', name: 'Jack Wallside', position: 'Defensa', team: ['Inazuma Legends National'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JackWallside&backgroundColor=a16207' },
   { id: 'Nathan Swift A', name: 'Nathan Swift', position: 'Defensa', team: ['Inazuma Legends National'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=NathanSwift&backgroundColor=06b6d4' },
   { id: 'Xavier Schiller', name: 'Xavier Schiller', position: 'Delantero', team: ['Inazuma Legends National'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
@@ -222,7 +222,7 @@ export const playersDatabase: PlayerData[] = [
   //El Dorado 02
   { id: 'Mecha-Mark', name: 'Mecha-Mark', position: 'Portero', team: ['El Dorado 02'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MarkEvans&backgroundColor=0ea5e9' },
   
-  
+
 
 ];
 
