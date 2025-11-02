@@ -9,14 +9,14 @@ export interface PlayerData {
 
 export const playersDatabase: PlayerData[] = [
   // Raimon
-  { id: 'Mark Evans', name: 'Mark Evans', position: 'Portero', team: ['Raimon'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MarkEvans&backgroundColor=0ea5e9' },
-  { id: 'Jack Wallside', name: 'Jack Wallside', position: 'Defensa', team: ['Raimon'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JackWallside&backgroundColor=a16207' },
-  { id: 'Nathan Swift', name: 'Nathan Swift', position: 'Defensa', team: ['Raimon'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=NathanSwift&backgroundColor=06b6d4' },
+  { id: 'Mark Evans', name: 'Mark Evans', position: 'Portero', team: ['Raimon','Inazuma National'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MarkEvans&backgroundColor=0ea5e9' },
+  { id: 'Jack Wallside', name: 'Jack Wallside', position: 'Defensa', team: ['Raimon','Inazuma National'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JackWallside&backgroundColor=a16207' },
+  { id: 'Nathan Swift', name: 'Nathan Swift', position: 'Defensa', team: ['Raimon','Inazuma National'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=NathanSwift&backgroundColor=06b6d4' },
   { id: 'Jim Wraith', name: 'Jim Wraith', position: 'Defensa', team: ['Raimon'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=NathanSwiftJr&backgroundColor=0891b2' },
-  { id: 'Tod Ironside', name: 'Tod Ironside', position: 'Defensa', team: ['Raimon'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SilviaWoods&backgroundColor=16a34a' },
+  { id: 'Tod Ironside', name: 'Tod Ironside', position: 'Defensa', team: ['Raimon','Inazuma National'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SilviaWoods&backgroundColor=16a34a' },
   { id: 'Steve Grim', name: 'Steve Grim', position: 'Mediocampo', team: ['Raimon'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
-  { id: 'Kevin Dragonfly', name: 'Kevin Dragonfly', position: 'Delantero', team: ['Raimon'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=KevinDragonfly&backgroundColor=ef4444' },
-  { id: 'Axel Blaze', name: 'Axel Blaze', position: 'Delantero', team: ['Raimon', 'Kirkwood'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AxelBlaze&backgroundColor=fb923c' },
+  { id: 'Kevin Dragonfly', name: 'Kevin Dragonfly', position: 'Delantero', team: ['Raimon','Inazuma National'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=KevinDragonfly&backgroundColor=ef4444' },
+  { id: 'Axel Blaze', name: 'Axel Blaze', position: 'Delantero', team: ['Raimon','Inazuma National'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AxelBlaze&backgroundColor=fb923c' },
   { id: 'Sam Kincaid', name: 'Sam Kincaid', position: 'Mediocampo', team: ['Raimon'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=XavierFoster&backgroundColor=dc2626' },
   { id: 'Bobby Shearer', name: 'Bobby Shearer', position: 'Defensa', team: ['Raimon', 'Royal Academy'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=BobbyShearer&backgroundColor=fbbf24' },
   { id: 'Erik Eagle', name: 'Erik Eagle', position: 'Mediocampo', team: ['Raimon', 'Unicorn'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TodIronside&backgroundColor=92400e' },
@@ -37,10 +37,10 @@ export const playersDatabase: PlayerData[] = [
   { id: 'Zander Warmington', name: 'Zander Warmington', position: 'Portero', team: ['Raimon'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AustinHobbes&backgroundColor=0c4a6e' },
 
   //Raimon First Squad
-  { id: 'Arion Sherwind', name: 'Arion Sherwind', position: 'Mediocampo', team: ['Raimon First Squad'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
-  { id: 'Victor Blade', name: 'Victor Blade', position: 'Delantero', team: ['Raimon First Squad'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
-  { id: 'Riccardo Di Rigo', name: 'Riccardo Di Rigo', position: 'Mediocampo', team: ['Raimon First Squad'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
-  { id: 'Jean-Pierre Lapin', name: 'Jean-Pierre Lapin', position: 'Portero', team: ['Raimon First Squad'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
+  { id: 'Arion Sherwind', name: 'Arion Sherwind', position: 'Mediocampo', team: ['Raimon First Squad','Earth Eleven'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
+  { id: 'Victor Blade', name: 'Victor Blade', position: 'Delantero', team: ['Raimon First Squad','Earth Eleven'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
+  { id: 'Riccardo Di Rigo', name: 'Riccardo Di Rigo', position: 'Mediocampo', team: ['Raimon First Squad','Earth Eleven'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
+  { id: 'Jean-Pierre Lapin', name: 'Jean-Pierre Lapin', position: 'Portero', team: ['Raimon First Squad', 'Earth Eleven'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
   { id: 'Gabriel Garcia', name: 'Gabriel Garcia', position: 'Defensa', team: ['Raimon First Squad'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
   { id: 'Samguk Han', name: 'Samguk Han', position: 'Portero', team: ['Raimon First Squad'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
   { id: 'Subaru Honda', name: 'Subaru Honda', position: 'Defensa', team: ['Raimon First Squad'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
@@ -58,12 +58,12 @@ export const playersDatabase: PlayerData[] = [
   { id: 'Hugues Baudet', name: 'Hugues Baudet', position: 'Mediocampo', team: ['Raimon First Squad','Raimon Second Squad'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
   { id: 'Goldie Lemon', name: 'Goldie Lemon', position: 'Defensa', team: ['Raimon First Squad'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
   { id: 'Goldie Lemon MM', name: 'Goldie Lemon', position: 'Defensa', team: ['Raimon First Squad'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
-  { id: 'Arion Sherwind MM1', name: 'Arion Sherwind', position: 'Mediocampo', team: ['Raimon First Squad'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
-  { id: 'Victor Blade MM', name: 'Victor Blade', position: 'Delantero', team: ['Raimon First Squad'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
-  { id: 'Riccardo Di Rigo MM', name: 'Riccardo Di Rigo', position: 'Mediocampo', team: ['Raimon First Squad'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
-  { id: 'Jean-Pierre Lapin MM', name: 'Jean-Pierre Lapin', position: 'Portero', team: ['Raimon First Squad'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
+  { id: 'Arion Sherwind MM1', name: 'Arion Sherwind', position: 'Mediocampo', team: ['Raimon First Squad','Earth Eleven'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
+  { id: 'Victor Blade MM', name: 'Victor Blade', position: 'Delantero', team: ['Raimon First Squad','Earth Eleven'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
+  { id: 'Riccardo Di Rigo MM', name: 'Riccardo Di Rigo', position: 'Mediocampo', team: ['Raimon First Squad','Earth Eleven'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
+  { id: 'Jean-Pierre Lapin MM', name: 'Jean-Pierre Lapin', position: 'Portero', team: ['Raimon First Squad','Earth Eleven'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
   { id: 'Gabriel Garcia MM', name: 'Gabriel Garcia', position: 'Defensa', team: ['Raimon First Squad'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
-  { id: 'Arion Sherwind MM2', name: 'Arion Sherwind', position: 'Mediocampo', team: ['Raimon First Squad'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
+  { id: 'Arion Sherwind MM2', name: 'Arion Sherwind', position: 'Mediocampo', team: ['Raimon First Squad','Earth Eleven'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
   { id: 'Ryoma Nishiki MM', name: 'Ryoma Nishiki', position: 'Mediocampo', team: ['Raimon First Squad'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShawnFrost&backgroundColor=0284c7' },
 
   //Raimon Second Squad
@@ -100,7 +100,7 @@ export const playersDatabase: PlayerData[] = [
 
 
   // Royal Academy
-  { id: 'Jude Sharp', name: 'Jude Sharp', position: 'Mediocampo', team: [ 'Royal Academy'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JudeSharp&backgroundColor=1e3a8a' },
+  { id: 'Jude Sharp', name: 'Jude Sharp', position: 'Mediocampo', team: [ 'Royal Academy','Inazuma National'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JudeSharp&backgroundColor=1e3a8a' },
   { id: 'Joseph King', name: 'Joseph King', position: 'Portero', team: ['Royal Academy','Neo National'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=DarrenLaChance&backgroundColor=15803d' },
   { id: 'Peter Drent', name: 'Peter Drent', position: 'Defensa', team: ['Royal Academy'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SamKincaid&backgroundColor=78716c' },
   { id: 'Ben Simmons', name: 'Ben Simmons', position: 'Defensa', team: ['Royal Academy'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=DavidSamford&backgroundColor=1e40af' },
@@ -179,34 +179,51 @@ export const playersDatabase: PlayerData[] = [
   { id: 'Laban Lux', name: 'Laban Lux', position: 'Mediocampo', team: ['Eternal Light'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=EternalLight3&backgroundColor=f97316' },
   { id: 'Filbert Wiessman', name: 'Filbert Wiessman', position: 'Delantero', team: ['Eternal Light'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=EternalLight3&backgroundColor=f97316' },
   { id: 'Bailong', name: 'Bailong', position: 'Delantero', team: ['Eternal Light','Tema Zero','Chrono Storm','Japanese Resistance'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=EternalLight3&backgroundColor=f97316' },
+  { id: 'Bailong MM', name: 'Bailong', position: 'Delantero', team: ['Eternal Light','Tema Zero','Chrono Storm','Japanese Resistance'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=EternalLight3&backgroundColor=f97316' },
   
-  // Alien Academy
-  { id: 'midorikawa', name: 'Ryoma Midorikawa', position: 'Mediocampo', team: ['Alien Academy'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=RyomaMidorikawa&backgroundColor=22c55e' },
-  { id: 'saginuma', name: 'Joseph King', position: 'Portero', team: ['Alien Academy'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JosephKing&backgroundColor=ea580c' },
-  { id: 'burn', name: 'Bryce Withingale', position: 'Delantero', team: ['Alien Academy'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=BryceWithingale&backgroundColor=f97316' },
-  { id: 'gazelle', name: 'Byron Love', position: 'Mediocampo', team: ['Alien Academy', 'Zeus'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ByronLove&backgroundColor=fbbf24' },
+  //inazuma National 
+  { id: 'Shawn Froste', name: 'Shawn Froste', position: 'Delantero', team: ['Inazuma National','Alpino'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Scott Banyan', name: 'Scott Banyan', position: 'Defensa', team: ['Inazuma National','Claustro Sagrado'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Darren LaChance', name: 'Darren LaChance', position: 'Portero', team: ['Inazuma National','Fauxshore'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Hurley Kane', name: 'Hurley Kane', position: 'Defensa', team: ['Inazuma National', 'Mary Times'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Thor Stoutberg', name: 'Thor Stoutberg', position: 'Mediocampo', team: ['Inazuma National'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Austin Hobbes', name: 'Austin Hobbes', position: 'Delantero', team: ['Inazuma National'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Archer Hawkins', name: 'Archer Hawkins', position: 'Defensa', team: ['Inazuma National'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Xavier Foster', name: 'Xavier Foster', position: 'Delantero', team: ['Inazuma National'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Jordan Greenway', name: 'Jordan Greenway', position: 'Mediocampo', team: ['Inazuma National'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Caleb Stonewall', name: 'Caleb Stonewall', position: 'Mediocampo', team: ['Inazuma National'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
 
-  // Zeus
-  { id: 'aphrodi', name: 'Aphrodi', position: 'Delantero', team: ['Zeus', 'Raimon'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aphrodi&backgroundColor=d946ef' },
-  { id: 'poseidon', name: 'Poseidon', position: 'Defensa', team: ['Zeus'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Poseidon&backgroundColor=0891b2' },
-  { id: 'hermes', name: 'Hermes', position: 'Mediocampo', team: ['Zeus'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hermes&backgroundColor=a855f7' },
+  //Inazuma Legends National
+  { id: 'Mark Evans', name: 'Mark Evans', position: 'Portero', team: ['Inazuma Legends National'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MarkEvans&backgroundColor=0ea5e9' },
+  { id: 'Jack Wallside A', name: 'Jack Wallside', position: 'Defensa', team: ['Inazuma Legends National'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JackWallside&backgroundColor=a16207' },
+  { id: 'Nathan Swift A', name: 'Nathan Swift', position: 'Defensa', team: ['Inazuma Legends National'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=NathanSwift&backgroundColor=06b6d4' },
+  { id: 'Xavier Schiller', name: 'Xavier Schiller', position: 'Delantero', team: ['Inazuma Legends National'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Caleb Stonewall A', name: 'Caleb Stonewall', position: 'Mediocampo', team: ['Inazuma Legends National'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Shawn Froste A', name: 'Shawn Froste', position: 'Delantero', team: ['Inazuma Legends National'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Hurley Kane A', name: 'Hurley Kane', position: 'Defensa', team: ['Inazuma Legends National'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShinsukeNishizono&backgroundColor=7c3aed' },
+  { id: 'Jude Sharp A', name: 'Jude Sharp', position: 'Mediocampo', team: ['Inazuma Legends National'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JudeSharp&backgroundColor=1e3a8a' },
+  { id: 'David Samford A', name: 'David Samford', position: 'Delantero', team: ['Inazuma Legends National'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JudeSharp&backgroundColor=1e3a8a' },
+  { id: 'Kevin Dragonfly A', name: 'Kevin Dragonfly', position: 'Delantero', team: ['Inazuma Legends National'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=KevinDragonfly&backgroundColor=ef4444' },
+  { id: 'Axel Blaze A', name: 'Axel Blaze', position: 'Delantero', team: ['Inazuma Legends National'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AxelBlaze&backgroundColor=fb923c' },
+ 
+  //Epsilon
+  { id: 'Dvalin', name: 'Dvalin', position: 'Portero', team: ['Epsilon'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
+  { id: 'Kenville', name: 'Kenville', position: 'Defensa', team: ['Epsilon'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
+  { id: 'Mole', name: 'Mole', position: 'Defensa', team: ['Epsilon'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
+  { id: 'Kayson', name: 'Kayson', position: 'Defensa', team: ['Epsilon'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
+  { id: 'Tytan', name: 'Tytan', position: 'Defensa', team: ['Epsilon'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
+  { id: 'Fedora', name: 'Fedora', position: 'Mediocampo', team: ['Epsilon'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
+  { id: 'Krypto', name: 'Krypto', position: 'Mediocampo', team: ['Epsilon'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
+  { id: 'Sworm', name: 'Swoem', position: 'Mediocampo', team: ['Epsilon'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
+  { id: 'Mercury', name: 'Mercury', position: 'Delantero', team: ['Epsilon'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
+  { id: 'Metron', name: 'Metron', position: 'Delantero', team: ['Epsilon'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
+  { id: 'Zell', name: 'Zell', position: 'Delantero', team: ['Epsilon'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon1&backgroundColor=4b5563' },
 
-  // Epsilon
-  { id: 'desarm', name: 'Desarm', position: 'Portero', team: ['Epsilon'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Desarm&backgroundColor=64748b' },
-  { id: 'epsilon1', name: 'Epsilon 01', position: 'Defensa', team: ['Epsilon'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon01&backgroundColor=475569' },
-  { id: 'epsilon2', name: 'Epsilon 02', position: 'Mediocampo', team: ['Epsilon'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Epsilon02&backgroundColor=334155' },
+  //El Dorado 02
+  { id: 'Mecha-Mark', name: 'Mecha-Mark', position: 'Portero', team: ['El Dorado 02'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MarkEvans&backgroundColor=0ea5e9' },
+  
+  
 
-  // The Genesis
-  { id: 'genesis1', name: 'Genesis 01', position: 'Defensa', team: ['The Genesis'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Genesis01&backgroundColor=7c2d12' },
-  { id: 'genesis2', name: 'Genesis 02', position: 'Mediocampo', team: ['The Genesis'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Genesis02&backgroundColor=991b1b' },
-  { id: 'genesis3', name: 'Genesis 03', position: 'Delantero', team: ['The Genesis'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Genesis03&backgroundColor=b91c1c' },
-
-  // Otros jugadores populares
-  { id: 'kogure2', name: 'Tod Ironside', position: 'Defensa', team: ['Raimon'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TodIronside&backgroundColor=92400e' },
-  { id: 'matsuno', name: 'Max Cannon', position: 'Mediocampo', team: ['Raimon'], element: 'Fuego', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MaxCannon&backgroundColor=f59e0b' },
-  { id: 'handa', name: 'Jim Wraith', position: 'Defensa', team: ['Raimon'], element: 'Bosque', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JimWraith&backgroundColor=14532d' },
-  { id: 'ichinose', name: 'Austin Hobbes', position: 'Delantero', team: ['Unicorn'], element: 'Viento', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AustinHobbes&backgroundColor=0c4a6e' },
-  { id: 'domon', name: 'Domon Asuka', position: 'Defensa', team: ['Unicorn'], element: 'Montaña', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=DomonAsuka&backgroundColor=713f12' },
 ];
 
 export function getPlayersByFilter(
