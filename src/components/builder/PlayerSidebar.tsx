@@ -37,7 +37,7 @@ export function PlayerSidebar({ availablePlayers, onDragStart }: PlayerSidebarPr
     return availablePlayers.filter(player => {
       const matchesSearch = player.name.toLowerCase().includes(search.toLowerCase());
       const matchesPosition = positionFilter === 'all' || player.position === positionFilter;
-      const matchesTeam = teamFilter === 'all' || player.team === teamFilter;
+      const matchesTeam = teamFilter === 'all' || player.team.includes(teamFilter);
       const matchesElement = elementFilter === 'all' || player.element === elementFilter;
 
       return matchesSearch && matchesPosition && matchesTeam && matchesElement;
