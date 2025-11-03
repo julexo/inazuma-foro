@@ -4,7 +4,7 @@
 export interface PlayerData {
   id: string;
   name: string;
-  position: 'Portero' | 'Defensa' | 'Mediocampo' | 'Delantero';
+  position: 'GK' | 'DF' | 'MF' | 'FW';
   team: string[];
   element: 'Fuego' | 'Viento' | 'Bosque' | 'Montaña';
   avatar: string;

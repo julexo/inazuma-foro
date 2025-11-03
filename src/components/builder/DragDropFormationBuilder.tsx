@@ -30,7 +30,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
 
   // Nueva función de validación
   const validatePosition = (playerData: PlayerData, position: number): boolean => {
-    if (position === 1 && playerData.position !== 'Portero') {
+    if (position === 1 && playerData.position !== 'GK') {
       setError('Solo puedes colocar porteros en la posición 1');
       return false;
     }
