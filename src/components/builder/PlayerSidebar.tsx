@@ -44,9 +44,6 @@ export function PlayerSidebar({ availablePlayers, onDragStart }: PlayerSidebarPr
     });
   }, [availablePlayers, search, positionFilter, teamFilter, elementFilter]);
 
-  const headerId = 'player-sidebar-header';
-  const footerId = 'player-sidebar-footer';
-
   return (
     <div className="h-full flex flex-col bg-slate-800/90 backdrop-blur-sm rounded-xl border border-slate-700/50 shadow-xl overflow-hidden">
       {/* Header con título y búsqueda */}

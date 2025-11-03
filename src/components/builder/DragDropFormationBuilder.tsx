@@ -6,8 +6,7 @@ import { PlayerSidebar } from './PlayerSidebar';
 import { playersDatabase } from '@/lib/PlayerDataBase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Trash2, AlertCircle, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Trash2, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
 
 interface DragDropFormationBuilderProps {
   formation: Formation;

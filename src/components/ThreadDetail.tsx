@@ -1,259 +1,369 @@
 'use client'
 
-import { useState } from 'react';
-// 1. Importa los tipos y componentes necesarios
-import { Thread, Reply, Formation } from '@/types';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { FormationField } from '@/components/FormationField'; // Para MOSTRAR alineaciones
-import { X, Send, Grid, Layers } from 'lucide-react'; // Iconos (Grid y Layers son nuevos)
-import { Badge } from '@/components/ui/badge';
-import {Label} from "@/components/ui/label"
-
-// 2. Importa el BUILDER y las formaciones
-import { DragDropFormationBuilder } from '@/components/builder/DragDropFormationBuilder';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { formationsDatabase, formationNames } from '@/lib/formationDatabase' // Asegúrate de que esta ruta es correcta
+import { Thread, Reply, Formation } from '@/types'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { ArrowLeft, MessageSquare, Plus, X, Layout, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { Textarea } from '@/components/ui/textarea'
+import { DragDropFormationBuilder } from './builder/DragDropFormationBuilder'
+import { formationsDatabase } from '@/lib/formationDatabase'
 
 interface ThreadDetailProps {
-  thread: Thread;
-  onAddReply: (threadId: number, reply: Omit<Reply, 'id' | 'timestamp'>) => void;
-  onClose: () => void;
-  currentUser: string | null;
+  thread: Thread
+  onAddReply: (threadId: number, reply: Omit<Reply, 'id' | 'timestamp'>) => void
+  onClose: () => void
+  currentUser: string | null
 }
 
 export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: ThreadDetailProps) {
-  // --- Estados para el formulario de respuesta ---
-  const [replyContent, setReplyContent] = useState('');
-  const [showReplyForm, setShowReplyForm] = useState(false);
-  
-  // --- 3. Nuevos estados para el constructor de alineación de la respuesta ---
-  const [showReplyBuilder, setShowReplyBuilder] = useState(false);
-  const [replyFormation, setReplyFormation] = useState<Formation>(formationsDatabase["4-4-2"]); // Formación por defecto
-  const [replyFormationName, setReplyFormationName] = useState<string>("4-4-2");
-  // ---
+  const [replyContent, setReplyContent] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showFormationBuilder, setShowFormationBuilder] = useState(false)
+  const [replyFormation, setReplyFormation] = useState<Formation | undefined>(undefined)
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const handleSubmitReply = async () => {
+    if (!replyContent.trim()) return
+    
+    setIsSubmitting(true)
+    await onAddReply(thread.id, {
+      content: replyContent,
+      author: currentUser || 'Anónimo',
+      authorAvatar: '/default-avatar.png',
+      formation: replyFormation, // Incluir la formación si existe
+    })
+    setReplyContent('')
+    setReplyFormation(undefined)
+    setShowFormationBuilder(false)
+    setIsSubmitting(false)
+  }
 
-  // Función para cambiar la formación base de la respuesta
-  const handleFormationChange = (key: string) => {
-    setReplyFormationName(key);
-    if (key in formationsDatabase) {
-      setReplyFormation(formationsDatabase[key as keyof typeof formationsDatabase]);
+  const handleCancelFormation = () => {
+    setShowFormationBuilder(false)
+    setReplyFormation(undefined) // Borrar la formación al cancelar
+  }
+
+  const handleToggleFormation = () => {
+    if (showFormationBuilder) {
+      // Si está mostrando el builder, lo cancelamos y borramos
+      handleCancelFormation()
+    } else {
+      // Si no está mostrando, lo abrimos con una formación por defecto
+      setShowFormationBuilder(true)
+      if (!replyFormation) {
+        setReplyFormation(formationsDatabase['4-4-2'])
+      }
     }
   }
 
-  // --- 4. Lógica de envío de respuesta actualizada ---
-  const handleSubmitReply = () => {
-    if (currentUser && replyContent.trim()) {
-      // Genera un avatar simple (o usa uno del contexto si lo tienes)
-      const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.replace(/\s+/g, '')}`;
-      
-      // Prepara el objeto 'reply'
-      const replyObject: Omit<Reply, 'id' | 'timestamp'> = {
-        author: currentUser,
-        authorAvatar: avatarUrl,
-        content: replyContent,
-        // Añade la formación SÓLO SI el builder estaba visible
-        formation: showReplyBuilder ? { ...replyFormation, name: replyFormationName } : undefined
-      };
-
-      // Llama a la función del padre (de [threadId]/page.tsx)
-      onAddReply(thread.id, replyObject);
-
-      // Resetea el formulario
-      setReplyContent('');
-      setShowReplyForm(false);
-      setShowReplyBuilder(false);
-      setReplyFormation(formationsDatabase["4-4-2"]); // Resetea a la formación por defecto
-      setReplyFormationName("4-4-2");
-    }
-  };
-  // ---
-
   return (
-    <div className="space-y-4">
-      {/* HILO PRINCIPAL */}
-      <Card className="bg-slate-800/60 backdrop-blur-sm border border-slate-700 shadow-xl text-slate-100">
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3 flex-1">
-              <Avatar className="h-12 w-12 border-2 border-sky-500">
-                <AvatarImage src={thread.authorAvatar} alt={thread.author} />
-                <AvatarFallback className="bg-sky-700 text-white">
-                  {thread.author.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="space-y-2 flex-1 pt-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-xl sm:text-2xl font-bold text-white">{thread.title}</h2>
-                  {thread.formation?.name && (
-                    <Badge className="bg-gradient-to-r from-sky-500 to-blue-600 shadow-md border border-sky-400 text-white">
-                      {thread.formation.name}
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-400">
-                  <span className="font-medium text-slate-200">{thread.author}</span>
-                  <span>·</span>
-                  <span>{formatDate(thread.timestamp)}</span>
-                </div>
+    <div className="space-y-6">
+      {/* Header con botón volver */}
+      <div className="flex items-center gap-4">
+        <Button
+          onClick={onClose}
+          variant="ghost"
+          className="text-slate-300 hover:text-white hover:bg-slate-800/50"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Volver
+        </Button>
+      </div>
+
+      {/* Hilo principal */}
+      <Card className="bg-slate-800/50 backdrop-blur-sm border-slate-700/50 shadow-xl">
+        <div className="p-6 space-y-4">
+          {/* Header del hilo */}
+          <div className="flex items-start gap-4">
+            <Avatar className="h-12 w-12 border-2 border-slate-600">
+              <AvatarImage src={thread.authorAvatar} />
+              <AvatarFallback>{thread.author.slice(0, 2)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-semibold text-white">{thread.author}</span>
+                <span className="text-slate-400 text-sm">•</span>
+                <span className="text-slate-400 text-sm">
+                  {thread.timestamp.toLocaleDateString()}
+                </span>
               </div>
+              <h1 className="text-2xl font-bold text-white mb-2">{thread.title}</h1>
+              {thread.formation?.name && (
+                <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                  {thread.formation.name}
+                </Badge>
+              )}
             </div>
-            {/* Botón Cerrar (en página de detalle completa, puede redirigir) */}
-            <Button variant="ghost" size="icon" onClick={onClose} className="text-slate-400 hover:text-white hover:bg-slate-700">
-              <X className="h-5 w-5" />
-            </Button>
           </div>
-        </CardHeader>
 
-        <CardContent className="p-4 sm:p-6 space-y-4">
-          <p className="text-slate-200 whitespace-pre-wrap">{thread.content}</p>
+          {/* Contenido */}
+          <div className="prose prose-invert max-w-none">
+            <p className="text-slate-300">{thread.content}</p>
+          </div>
 
-          {/* Alineación del Hilo Principal */}
-          {thread.formation?.players?.length > 0 && (
-            <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700 shadow-inner">
-              <h4 className="mb-3 font-semibold text-sky-300">Alineación propuesta</h4>
-              <FormationField formation={thread.formation} />
+          {/* Formación mejorada con campo más realista */}
+          {thread.formation && thread.formation.players.length > 0 && (
+            <div className="mt-4 bg-slate-900/30 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-slate-300 mb-3">Alineación: {thread.formation.name}</h3>
+              <div className="relative w-full h-96 bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-lg overflow-hidden shadow-2xl border-2 border-green-800">
+                {/* Textura del césped */}
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 35px, rgba(255,255,255,.03) 35px, rgba(255,255,255,.03) 70px)'
+                  }} />
+                </div>
+
+                {/* SVG del campo con más detalles */}
+                <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" preserveAspectRatio="none">
+                  {/* Líneas exteriores */}
+                  <rect x="2%" y="2%" width="96%" height="96%" fill="none" stroke="white" strokeWidth="3" />
+                  
+                  {/* Línea central */}
+                  <line x1="50%" y1="2%" x2="50%" y2="98%" stroke="white" strokeWidth="3" />
+                  
+                  {/* Círculo central */}
+                  <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="3" />
+                  <circle cx="50%" cy="50%" r="1.5%" fill="white" />
+                  
+                  {/* Área grande izquierda */}
+                  <rect x="2%" y="25%" width="16%" height="50%" fill="none" stroke="white" strokeWidth="3" />
+                  {/* Área pequeña izquierda */}
+                  <rect x="2%" y="38%" width="8%" height="24%" fill="none" stroke="white" strokeWidth="3" />
+                  {/* Punto penal izquierdo */}
+                  <circle cx="12%" cy="50%" r="1%" fill="white" />
+                  {/* Arco de área penal izquierdo */}
+                  <path d="M 10% 25% Q 18% 50% 10% 75%" fill="none" stroke="white" strokeWidth="3" />
+                  
+                  {/* Área grande derecha */}
+                  <rect x="82%" y="25%" width="16%" height="50%" fill="none" stroke="white" strokeWidth="3" />
+                  {/* Área pequeña derecha */}
+                  <rect x="90%" y="38%" width="8%" height="24%" fill="none" stroke="white" strokeWidth="3" />
+                  {/* Punto penal derecho */}
+                  <circle cx="88%" cy="50%" r="1%" fill="white" />
+                  {/* Arco de área penal derecho */}
+                  <path d="M 90% 25% Q 82% 50% 90% 75%" fill="none" stroke="white" strokeWidth="3" />
+                  
+                  {/* Esquinas */}
+                  <path d="M 2% 2% Q 4% 2% 4% 4%" fill="none" stroke="white" strokeWidth="2" />
+                  <path d="M 98% 2% Q 96% 2% 96% 4%" fill="none" stroke="white" strokeWidth="2" />
+                  <path d="M 2% 98% Q 4% 98% 4% 96%" fill="none" stroke="white" strokeWidth="2" />
+                  <path d="M 98% 98% Q 96% 98% 96% 96%" fill="none" stroke="white" strokeWidth="2" />
+                </svg>
+
+                {/* Jugadores con mejor diseño */}
+                {thread.formation.players.map((player) => (
+                  player.playerData && (
+                    <div
+                      key={player.id}
+                      className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                      style={{ left: `${player.position.x}%`, top: `${player.position.y}%` }}
+                    >
+                      <div className="relative group">
+                        <div className="absolute -inset-2 bg-blue-400/20 rounded-full blur-md group-hover:bg-blue-400/40 transition-all" />
+                        <Avatar className="h-14 w-14 border-3 border-white ring-4 ring-blue-500 shadow-2xl relative">
+                          <AvatarImage src={player.playerData.avatar} />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold">
+                            {player.playerData.name.slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {/* Tooltip mejorado */}
+                        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 whitespace-nowrap bg-gradient-to-r from-slate-900 to-slate-800 text-white px-3 py-2 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-10 shadow-xl border border-slate-600">
+                          <div className="font-bold text-sm">{player.playerData.name}</div>
+                          <div className="text-blue-300 text-[10px] mt-0.5">{player.playerData.position}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                ))}
+              </div>
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
 
-      {/* SECCIÓN DE RESPUESTAS (Comentarios) */}
-      {thread.replies.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-xl font-bold text-white">{thread.replies.length} {thread.replies.length === 1 ? 'Respuesta' : 'Respuestas'}</h3>
-          {thread.replies.map((reply) => (
-            <Card key={reply.id} className="p-4 bg-slate-800/60 backdrop-blur-sm border border-slate-700 shadow-md text-slate-200">
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10 border-2 border-slate-600">
-                    <AvatarImage src={reply.authorAvatar} alt={reply.author} />
-                    <AvatarFallback className="bg-sky-700 text-white">
-                      {reply.author.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-semibold text-slate-100">{reply.author}</span>
-                      <span className="text-slate-400">·</span>
-                      <span className="text-slate-400">{formatDate(new Date(reply.timestamp))}</span>
-                    </div>
-                    <p className="whitespace-pre-wrap">{reply.content}</p>
-                    
-                    {/* 5. Muestra la alineación SI existe en la respuesta */}
-                    {reply.formation && reply.formation.players?.length > 0 && (
-                      <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700 shadow-inner mt-4">
-                        <h4 className="mb-3 font-semibold text-orange-300">
-                          Respuesta con alineación: {reply.formation.name}
-                        </h4>
-                        <FormationField formation={reply.formation} />
-                      </div>
-                    )}
+      {/* Respuestas */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <MessageSquare className="h-5 w-5" />
+          Respuestas ({thread.replies.length})
+        </h2>
+
+        {/* Formulario de respuesta mejorado */}
+        {currentUser && (
+          <Card className="bg-slate-800/50 backdrop-blur-sm border-slate-700/50 p-4 shadow-xl">
+            <div className="space-y-4">
+              <Textarea
+                placeholder="Escribe tu respuesta..."
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-400 focus-visible:ring-orange-500/50"
+                rows={3}
+              />
+
+              {/* Botón mejorado para mostrar/ocultar builder de formación */}
+              <div className="flex items-center justify-between gap-3 p-3 bg-slate-900/30 rounded-lg border border-slate-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-orange-500/20">
+                    <Layout className="h-4 w-4 text-orange-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-200">
+                      {showFormationBuilder ? 'Alineación en progreso' : 'Agregar alineación'}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {replyFormation ? `${replyFormation.name} - ${replyFormation.players.filter(p => p.playerData).length}/11 jugadores` : 'Opcional'}
+                    </p>
                   </div>
                 </div>
+                
+                <Button
+                  type="button"
+                  variant={showFormationBuilder ? "destructive" : "default"}
+                  size="sm"
+                  onClick={handleToggleFormation}
+                  className={showFormationBuilder 
+                    ? "bg-red-900/50 hover:bg-red-800/50 border-red-700" 
+                    : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md"
+                  }
+                >
+                  {showFormationBuilder ? (
+                    <>
+                      <X className="h-4 w-4 mr-2" />
+                      Cancelar
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Añadir
+                    </>
+                  )}
+                </Button>
               </div>
-            </Card>
-          ))}
-        </div>
-      )}
 
-      {/* FORMULARIO DE NUEVA RESPUESTA */}
-      {!showReplyForm ? (
-        // Botón para MOSTRAR el formulario
-        <Button 
-          onClick={() => setShowReplyForm(true)} 
-          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-lg text-white font-semibold text-base py-6"
-          disabled={!currentUser}
-        >
-          <Send className="mr-2 h-4 w-4" />
-          {currentUser ? 'Escribir una respuesta' : 'Inicia sesión para responder'}
-        </Button>
-      ) : (
-        // Formulario que se muestra al hacer clic
-        <Card className="p-4 sm:p-6 bg-slate-800/60 backdrop-blur-sm border border-slate-700 shadow-lg">
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold text-white">Tu respuesta</h3>
-            <Textarea
-              placeholder="Escribe tu comentario..."
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              rows={4}
-              className="bg-slate-900 border-slate-700 text-white focus:ring-sky-500"
-            />
-            
-            {/* 6. Botón para mostrar/ocultar el constructor */}
-            <Button 
-              variant="outline" 
-              className="w-full sm:w-auto bg-sky-800/50 border-sky-700 text-sky-200 hover:bg-sky-700 hover:text-white"
-              onClick={() => setShowReplyBuilder(!showReplyBuilder)}
-            >
-              {showReplyBuilder ? <Layers className="mr-2 h-4 w-4" /> : <Grid className="mr-2 h-4 w-4" />}
-              {showReplyBuilder ? 'Ocultar Alineación' : 'Añadir Alineación'}
-            </Button>
+              {/* Builder de formación con transición */}
+              {showFormationBuilder && (
+                <div className="bg-slate-900/30 rounded-xl p-4 border border-slate-700/50 animate-in slide-in-from-top-2">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                      <Layout className="h-4 w-4 text-orange-400" />
+                      Construir Alineación
+                    </h3>
+                    {replyFormation && (
+                      <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                        {replyFormation.players.filter(p => p.playerData).length}/11
+                      </Badge>
+                    )}
+                  </div>
+                  <DragDropFormationBuilder
+                    formation={replyFormation || formationsDatabase['4-4-2']}
+                    onFormationChange={setReplyFormation}
+                  />
+                </div>
+              )}
 
-            {/* 7. Constructor condicional */}
-            {showReplyBuilder && (
-              <div className="space-y-4 p-4 rounded-md border border-slate-700 bg-slate-900/50">
-                 <div className="space-y-2">
-                   <Label className="text-lg text-slate-200">Elige una Formación Base</Label>
-                   <Select onValueChange={handleFormationChange} defaultValue={replyFormationName}>
-                     <SelectTrigger className="w-full sm:w-[280px] bg-slate-800 border-slate-700 text-white focus:ring-sky-500">
-                       <SelectValue />
-                     </SelectTrigger>
-                     <SelectContent className="bg-slate-900 text-white border-slate-700">
-                       {formationNames.map((name) => (
-                         <SelectItem key={name} value={name} className="focus:bg-slate-700">{name}</SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
-                 <DragDropFormationBuilder 
-                   formation={replyFormation}
-                   onFormationChange={setReplyFormation}
-                 />
-              </div>
-            )}
-            
-            {/* Botones de Publicar / Cancelar */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button 
+              <Button
                 onClick={handleSubmitReply}
-                className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md text-white font-semibold"
-                disabled={!replyContent.trim()} // Deshabilitado si no hay texto
+                disabled={isSubmitting || !replyContent.trim()}
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <Send className="mr-2 h-4 w-4" />
-                Publicar Respuesta
-              </Button>
-              <Button 
-                variant="outline" 
-                className="bg-slate-700/50 border-slate-600 text-slate-200 hover:bg-slate-700"
-                onClick={() => {
-                  setShowReplyForm(false); 
-                  setShowReplyBuilder(false); 
-                  setReplyContent('');
-                }}
-              >
-                Cancelar
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <span>Publicando...</span>
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    <span>Publicar Respuesta</span>
+                  </>
+                )}
               </Button>
             </div>
-          </div>
-        </Card>
-      )}
+          </Card>
+        )}
+
+        {/* Lista de respuestas con campo mejorado */}
+        {thread.replies.map((reply) => (
+          <Card key={reply.id} className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50 p-4">
+            <div className="flex items-start gap-3">
+              <Avatar className="h-10 w-10 border-2 border-slate-600">
+                <AvatarImage src={reply.authorAvatar} />
+                <AvatarFallback>{reply.author.slice(0, 2)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-semibold text-white">{reply.author}</span>
+                  <span className="text-slate-400 text-sm">
+                    {reply.timestamp.toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-slate-300">{reply.content}</p>
+                
+                {/* Formación en respuesta con diseño mejorado */}
+                {reply.formation && reply.formation.players.length > 0 && (
+                  <div className="mt-3 bg-slate-900/30 rounded-lg p-3">
+                    <h4 className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-2">
+                      <Layout className="h-3 w-3" />
+                      Alineación: {reply.formation.name}
+                    </h4>
+                    <div className="relative w-full h-80 bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-lg overflow-hidden shadow-2xl border-2 border-green-800">
+                      {/* Textura del césped */}
+                      <div className="absolute inset-0 opacity-10">
+                        <div className="absolute inset-0" style={{
+                          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 35px, rgba(255,255,255,.03) 35px, rgba(255,255,255,.03) 70px)'
+                        }} />
+                      </div>
+
+                      {/* SVG del campo completo (igual que arriba) */}
+                      <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" preserveAspectRatio="none">
+                        {/* ...same SVG content as above... */}
+                        <rect x="2%" y="2%" width="96%" height="96%" fill="none" stroke="white" strokeWidth="3" />
+                        <line x1="50%" y1="2%" x2="50%" y2="98%" stroke="white" strokeWidth="3" />
+                        <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="3" />
+                        <circle cx="50%" cy="50%" r="1.5%" fill="white" />
+                        <rect x="2%" y="25%" width="16%" height="50%" fill="none" stroke="white" strokeWidth="3" />
+                        <rect x="2%" y="38%" width="8%" height="24%" fill="none" stroke="white" strokeWidth="3" />
+                        <circle cx="12%" cy="50%" r="1%" fill="white" />
+                        <rect x="82%" y="25%" width="16%" height="50%" fill="none" stroke="white" strokeWidth="3" />
+                        <rect x="90%" y="38%" width="8%" height="24%" fill="none" stroke="white" strokeWidth="3" />
+                        <circle cx="88%" cy="50%" r="1%" fill="white" />
+                      </svg>
+
+                      {/* Jugadores de la respuesta */}
+                      {reply.formation.players.map((player) => (
+                        player.playerData && (
+                          <div
+                            key={player.id}
+                            className="absolute transform -translate-x-1/2 -translate-y-1/2"
+                            style={{ left: `${player.position.x}%`, top: `${player.position.y}%` }}
+                          >
+                            <div className="relative group">
+                              <div className="absolute -inset-2 bg-green-400/20 rounded-full blur-md group-hover:bg-green-400/40 transition-all" />
+                              <Avatar className="h-12 w-12 border-3 border-white ring-4 ring-green-500 shadow-2xl relative">
+                                <AvatarImage src={player.playerData.avatar} />
+                                <AvatarFallback className="bg-gradient-to-br from-green-500 to-green-700 text-white font-bold">
+                                  {player.playerData.name.slice(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 whitespace-nowrap bg-gradient-to-r from-slate-900 to-slate-800 text-white px-3 py-2 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-10 shadow-xl border border-slate-600">
+                                <div className="font-bold text-sm">{player.playerData.name}</div>
+                                <div className="text-green-300 text-[10px] mt-0.5">{player.playerData.position}</div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
-  );
+  )
 }
 
