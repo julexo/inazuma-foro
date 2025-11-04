@@ -26,6 +26,17 @@ export function ImageCropDialog({ open, imageSrc, onCropComplete, onClose }: Ima
   const [processing, setProcessing] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
 
+  // Detección simple de soporte WebP
+  const supportsWebp = useCallback(() => {
+    try {
+      const c = document.createElement('canvas')
+      // Algunos navegadores devuelven 'data:' si no soportan el tipo
+      return c.toDataURL('image/webp').startsWith('data:image/webp')
+    } catch {
+      return false
+    }
+  }, [])
+
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget
     const cropSize = Math.min(width, height)
@@ -41,43 +52,60 @@ export function ImageCropDialog({ open, imageSrc, onCropComplete, onClose }: Ima
   }, [])
 
   async function getCroppedImg(): Promise<Blob | null> {
-    if (!completedCrop || !imgRef.current) {
-      return null
-    }
+    if (!completedCrop || !imgRef.current) return null
 
     const image = imgRef.current
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
-
-    if (!ctx) {
-      return null
-    }
+    if (!ctx) return null
 
     const scaleX = image.naturalWidth / image.width
     const scaleY = image.naturalHeight / image.height
 
-    canvas.width = completedCrop.width
-    canvas.height = completedCrop.height
+    // Tamaño de salida
+    canvas.width = Math.round(completedCrop.width)
+    canvas.height = Math.round(completedCrop.height)
 
     ctx.drawImage(
       image,
-      completedCrop.x * scaleX,
-      completedCrop.y * scaleY,
-      completedCrop.width * scaleX,
-      completedCrop.height * scaleY,
+      Math.round(completedCrop.x * scaleX),
+      Math.round(completedCrop.y * scaleY),
+      Math.round(completedCrop.width * scaleX),
+      Math.round(completedCrop.height * scaleY),
       0,
       0,
-      completedCrop.width,
-      completedCrop.height
+      Math.round(completedCrop.width),
+      Math.round(completedCrop.height)
     )
 
+    // Preferir WebP, fallback a JPEG si no está soportado o falla
+    const preferWebp = supportsWebp()
+
     return new Promise((resolve) => {
+      const tryJpeg = () => {
+        canvas.toBlob(
+          (blob) => resolve(blob),
+          'image/jpeg',
+          0.9
+        )
+      }
+
+      if (!preferWebp) {
+        tryJpeg()
+        return
+      }
+
       canvas.toBlob(
         (blob) => {
-          resolve(blob)
+          if (blob && blob.type === 'image/webp') {
+            resolve(blob)
+          } else {
+            // Fallback si el navegador ignora el tipo o no puede generar WEBP
+            tryJpeg()
+          }
         },
-        'image/jpeg',
-        0.95
+        'image/webp',
+        0.9
       )
     })
   }

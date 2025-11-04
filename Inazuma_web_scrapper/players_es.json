@@ -22650,6 +22650,32 @@
         "element": "Viento",
         "avatar": "ooxd-ldeoym"
     },
+     {
+        "id": "Arion2",
+        "name": "Arion Sherwind",
+        "position": "Centrocampista",
+        "team": [
+            "Raimon First Squad",
+            "The Sherwinds",
+            "Chrono Storm",
+            "Earth Eleven"
+        ],
+        "element": "Viento",
+        "avatar": "yed3ajuqoic"
+    },
+      {
+        "id": "Arion3",
+        "name": "Arion Sherwind",
+        "position": "Centrocampista",
+        "team": [
+            "Raimon First Squad",
+            "The Sherwinds",
+            "Chrono Storm",
+            "Earth Eleven"
+        ],
+        "element": "Viento",
+        "avatar": "bvrfyjqtgu8"
+    },
     {
         "id": "Victor",
         "name": "Victor Blade",
