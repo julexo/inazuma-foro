@@ -1,0 +1,26 @@
+[
+    {
+        "name": "0001-1020",
+        "url": "https://zukan.inazuma.jp/en/chara_list/?page=1&per_page=1000"
+    },
+    {
+        "name": "1021-2108",
+        "url": "https://zukan.inazuma.jp/en/chara_list/?page=2&per_page=1000"
+    },
+    {
+        "name": "2109-3123",
+        "url": "https://zukan.inazuma.jp/en/chara_list/?page=3&per_page=1000"
+    },
+    {
+        "name": "3124-4320",
+        "url": "https://zukan.inazuma.jp/en/chara_list/?page=4&per_page=1000"
+    },
+    {
+        "name": "4321-5406",
+        "url": "https://zukan.inazuma.jp/en/chara_list/?page=5&per_page=1000"
+    },
+    {
+        "name": "5407-5814",
+        "url": "https://zukan.inazuma.jp/en/chara_list/?page=6&per_page=1000"
+    }
+]

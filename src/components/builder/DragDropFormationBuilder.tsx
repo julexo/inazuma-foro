@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useMemo } from 'react';
-import { Formation, PlayerData } from '@/types';
-import { PlayerSidebar } from './PlayerSidebar';
-import { playersDatabase } from '@/lib/PlayerDataBase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Trash2, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
+import { getPlayerAvatarUrl } from '@/data/PlayerDataBase';
+import type { Player } from '@/data/PlayerDataBase';
+import type { Formation } from '@/types';
+import PlayerSidebar from './PlayerSidebar';
 
 interface DragDropFormationBuilderProps {
   formation: Formation;
@@ -14,22 +15,18 @@ interface DragDropFormationBuilderProps {
 }
 
 export function DragDropFormationBuilder({ formation, onFormationChange }: DragDropFormationBuilderProps) {
-  const [draggedPlayer, setDraggedPlayer] = useState<PlayerData | null>(null);
+  const [draggedPlayer, setDraggedPlayer] = useState<Player | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Memorizamos los jugadores usados y disponibles (sin cambios)
+  // Obtener IDs de jugadores ya usados - CORREGIDO: string en lugar de number
   const usedPlayerIds = useMemo(() => {
-    return new Set(formation.players.map(p => p.playerData?.id).filter(Boolean));
-  }, [formation]);
+    return new Set(formation.players.map(p => p.playerData?.id).filter(Boolean) as string[])
+  }, [formation.players])
 
-  const availablePlayers = useMemo(() => {
-    return playersDatabase.filter(p => !usedPlayerIds.has(p.id));
-  }, [usedPlayerIds]);
-
-  // Nueva función de validación
-  const validatePosition = (playerData: PlayerData, position: number): boolean => {
-    if (position === 1 && playerData.position !== 'GK') {
+  // Validación de posición
+  const validatePosition = (playerData: Player, position: number): boolean => {
+    if (position === 1 && playerData.position !== 'Portero') {
       setError('Solo puedes colocar porteros en la posición 1');
       return false;
     }
@@ -37,8 +34,8 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
     return true;
   };
 
-  // Funciones de manejo mejoradas
-  const handleDragStart = (player: PlayerData) => {
+  // Funciones de manejo
+  const handleDragStart = (player: Player) => {
     try {
       setDraggedPlayer(player);
       setError(null);
@@ -71,7 +68,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
           ? {
               ...player,
               name: draggedPlayer.name,
-              playerData: draggedPlayer,
+              playerData: draggedPlayer, // Ya no necesita conversión
             }
           : player
       );
@@ -98,19 +95,13 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
     onFormationChange({ ...formation, players: updatedPlayers });
   };
 
-  const getDefaultName = (id: number): string => { // Añadido tipo de retorno
+  const getDefaultName = (id: number): string => {
     if (id === 1) return 'Portero';
-    if (id <= 4) return 'Defensa'; // Ajustado ejemplo simple (4 def)
-    if (id <= 8) return 'Mediocampo'; // Ajustado ejemplo simple (4 med)
-    return 'Delantero'; // Ajustado ejemplo simple (2 del)
+    if (id <= 4) return 'Defensa';
+    if (id <= 8) return 'Mediocampo';
+    return 'Delantero';
   };
 
-  // Quitamos el _e si no se usa
-  const handleFieldClick = () => {
-    // No mover jugadores al hacer clic en el campo en modo drag-drop
-  };
-
-  // Utilidad para estilos de slots
   const getSlotStyles = (isHovered: boolean, hasPlayer: boolean) => `
     w-16 h-16 rounded-full 
     flex items-center justify-center 
@@ -125,16 +116,16 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[700px]">
       <div className="lg:col-span-1 h-full overflow-hidden">
-        <PlayerSidebar
-          availablePlayers={availablePlayers}
-          onDragStart={handleDragStart}
+        <PlayerSidebar 
+          onPlayerSelect={handleDragStart}
+          usedPlayerIds={usedPlayerIds}
         />
       </div>
 
       <div className="lg:col-span-3 space-y-4">
-        {/* Mensaje de error mejorado */}
+        {/* Mensaje de error */}
         {error && (
-          <div className="bg-red-900/40 backdrop-blur-sm border border-red-500/50 text-red-200 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg animate-in slide-in-from-top-2" role="alert">
+          <div className="bg-red-900/40 backdrop-blur-sm border border-red-500/50 text-red-200 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg" role="alert">
             <div className="p-2 rounded-lg bg-red-500/20">
               <AlertTriangle className="h-5 w-5" />
             </div>
@@ -142,7 +133,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
           </div>
         )}
 
-        {/* Mensaje informativo mejorado */}
+        {/* Mensaje informativo */}
         <div className="bg-slate-800/50 backdrop-blur-sm border border-sky-500/30 text-slate-200 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg">
           <div className="p-2 rounded-lg bg-sky-500/20">
             <Info className="h-5 w-5 text-sky-400" />
@@ -153,75 +144,75 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
         </div>
 
         {/* Campo de juego */}
-        <div
-          className="relative w-full h-[500px] bg-gradient-to-b from-green-600 to-green-700 rounded-lg overflow-hidden"
-          onClick={handleFieldClick}
-        >
-          {/* SVG existente */}
+        <div className="relative w-full h-[500px] bg-gradient-to-b from-green-600 to-green-700 rounded-lg overflow-hidden">
+          {/* SVG del campo */}
           <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" preserveAspectRatio="none">
-             {/* Líneas exteriores */}
-             <rect x="2%" y="2%" width="96%" height="96%" fill="none" stroke="white" strokeWidth="2" />
-             {/* Línea central */}
-             <line x1="50%" y1="2%" x2="50%" y2="98%" stroke="white" strokeWidth="2" />
-             {/* Círculo central */}
-             <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="2" />
-             <circle cx="50%" cy="50%" r="1%" fill="white" />
-             {/* Área izquierda */}
-             <rect x="2%" y="30%" width="15%" height="40%" fill="none" stroke="white" strokeWidth="2" />
-             <rect x="2%" y="42%" width="8%" height="16%" fill="none" stroke="white" strokeWidth="2" />
-             {/* Área derecha */}
-             <rect x="83%" y="30%" width="15%" height="40%" fill="none" stroke="white" strokeWidth="2" />
-             <rect x="90%" y="42%" width="8%" height="16%" fill="none" stroke="white" strokeWidth="2" />
-           </svg>
+            <rect x="2%" y="2%" width="96%" height="96%" fill="none" stroke="white" strokeWidth="2" />
+            <line x1="50%" y1="2%" x2="50%" y2="98%" stroke="white" strokeWidth="2" />
+            <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="2" />
+            <circle cx="50%" cy="50%" r="1%" fill="white" />
+            <rect x="2%" y="30%" width="15%" height="40%" fill="none" stroke="white" strokeWidth="2" />
+            <rect x="2%" y="42%" width="8%" height="16%" fill="none" stroke="white" strokeWidth="2" />
+            <rect x="83%" y="30%" width="15%" height="40%" fill="none" stroke="white" strokeWidth="2" />
+            <rect x="90%" y="42%" width="8%" height="16%" fill="none" stroke="white" strokeWidth="2" />
+          </svg>
 
-           {/* Slots de jugadores con estilos mejorados */}
-           {formation.players.map((player) => {
-             const playerData = player.playerData;
-             const isHovered = hoveredSlot === player.id;
+          {/* Slots de jugadores */}
+          {formation.players.map((player) => {
+            const playerData = player.playerData;
+            const isHovered = hoveredSlot === player.id;
+            const avatarUrl = playerData ? getPlayerAvatarUrl(playerData.avatar) : '';
 
-             return (
-               <div
-                 key={player.id}
-                 draggable={!!playerData}
-                 onDragStart={(e: React.DragEvent) => {
-                   if (playerData) {
-                     e.dataTransfer.effectAllowed = 'move';
-                     e.dataTransfer.setData('playerId', player.id.toString());
-                   }
-                 }}
-                 onDragOver={(e) => handleDragOver(e, player.id)}
-                 onDragLeave={handleDragLeave}
-                 onDrop={(e) => handleDrop(e, player.id)}
-                 className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200"
-                 style={{ left: `${player.position.x}%`, top: `${player.position.y}%` }}
-               >
-                 <div className="relative group">
-                   <div className={getSlotStyles(isHovered, !!playerData)}>
-                     {playerData ? (
-                       <Avatar className="h-14 w-14 border-2 border-white"><AvatarImage src={playerData.avatar} /><AvatarFallback>{playerData.name.slice(0, 2)}</AvatarFallback></Avatar>
-                     ) : (
-                       <span className="text-white text-xs">{player.id}</span>
-                     )}
-                   </div>
-                   <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 whitespace-nowrap bg-black/90 text-white px-3 py-1.5 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
-                     {player.name}
-                   </div>
-                   {playerData && (
-                     <Button size="icon" variant="destructive" className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                       onClick={(e: React.MouseEvent) => {
-                         e.stopPropagation(); handleRemovePlayer(player.id);
-                       }}
-                     >
-                       <Trash2 className="h-3 w-3" />
-                     </Button>
-                   )}
-                 </div>
-               </div>
-             );
-           })}
+            return (
+              <div
+                key={player.id}
+                draggable={!!playerData}
+                onDragStart={(e: React.DragEvent) => {
+                  if (playerData) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('playerId', player.id.toString());
+                  }
+                }}
+                onDragOver={(e) => handleDragOver(e, player.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, player.id)}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200"
+                style={{ left: `${player.position.x}%`, top: `${player.position.y}%` }}
+              >
+                <div className="relative group">
+                  <div className={getSlotStyles(isHovered, !!playerData)}>
+                    {playerData ? (
+                      <Avatar className="h-14 w-14 border-2 border-white">
+                        <AvatarImage src={avatarUrl} alt={playerData.name} />
+                        <AvatarFallback>{playerData.name.slice(0, 2)}</AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <span className="text-white text-xs">{player.id}</span>
+                    )}
+                  </div>
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 whitespace-nowrap bg-black/90 text-white px-3 py-1.5 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                    {player.name}
+                  </div>
+                  {playerData && (
+                    <Button 
+                      size="icon" 
+                      variant="destructive" 
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        handleRemovePlayer(player.id);
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Contador de jugadores mejorado */}
+        {/* Contador de jugadores */}
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 shadow-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

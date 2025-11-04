@@ -6,8 +6,8 @@ import { Filter, Search, TrendingUp, Clock } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { playersDatabase } from '@/lib/PlayerDataBase'
-import { PlayerData } from '@/types'
+import type { Player } from '@/data/PlayerDataBase'
+import { getAllPlayers, getPlayerAvatarUrl } from '@/data/PlayerDataBase'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface FilterBoxProps {
@@ -19,7 +19,8 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
   const [searchQuery, setSearchQuery] = useState('')
   const [formation, setFormation] = useState('all')
   const [showResults, setShowResults] = useState(false)
-  const [searchResults, setSearchResults] = useState<PlayerData[]>([])
+  const [searchResults, setSearchResults] = useState<Player[]>([])
+  const [players, setPlayers] = useState<Player[]>([])
   const [isInputFocused, setIsInputFocused] = useState(false)
   const [sortBy, setSortBy] = useState('recent') // 'recent' o 'popular'
   const searchRef = useRef<HTMLDivElement>(null)
@@ -61,9 +62,9 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
     timeoutRef.current = setTimeout(() => {
       const query = searchQuery.trim().toLowerCase()
       if (query.length >= 2) {
-        const filtered = playersDatabase
+        const filtered = players
           .filter(player => player.name.toLowerCase().includes(query))
-          .slice(0, 3)
+          .slice(0, 5)
         setSearchResults(filtered)
         setShowResults(true)
       } else {
@@ -77,7 +78,7 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [searchQuery, isInputFocused])
+  }, [searchQuery, isInputFocused, players])
 
   // Función para aplicar filtros
   const applyFilters = () => {
@@ -132,11 +133,10 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
   }
 
   // Manejar selección de jugador
-  const handlePlayerSelect = (player: PlayerData) => {
+  const handlePlayerSelect = (player: Player) => {
     setSearchQuery(player.name)
     setShowResults(false)
     setIsInputFocused(false)
-    // Aplicar filtros automáticamente al seleccionar
     if (onFilterChange) {
       onFilterChange({
         playerName: player.name,
@@ -145,6 +145,11 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
       })
     }
   }
+
+  useEffect(() => {
+    // Carga inicial de jugadores para autocompletado
+    getAllPlayers().then(setPlayers).catch(() => setPlayers([]))
+  }, [])
 
   return (
     <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-xl shadow-lg mb-8">
@@ -181,28 +186,31 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
               {/* Lista de resultados con posición mejorada */}
               {isInputFocused && showResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-[9999] mt-1 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-lg shadow-xl overflow-hidden">
-                  {searchResults.map((player) => (
-                    <button
-                      key={player.id}
-                      type="button"
-                      onClick={() => handlePlayerSelect(player)}
-                      className="w-full flex items-center gap-3 p-2 hover:bg-slate-700/70 transition-colors duration-150 border-b border-slate-700/50 last:border-0"
-                    >
-                      <Avatar className="h-8 w-8 border border-slate-600">
-                        <AvatarImage src={player.avatar} />
-                        <AvatarFallback className="bg-slate-700 text-slate-300">
-                          {player.name.slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 text-left">
-                        <p className="text-sm text-slate-200 font-medium">{player.name}</p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-orange-400">{player.position}</span>
-                          <span className="text-xs text-slate-400">{player.team}</span>
+                  {searchResults.map((player) => {
+                    const avatarUrl = getPlayerAvatarUrl(player.avatar)
+                    return (
+                      <button
+                        key={player.id}
+                        type="button"
+                        onClick={() => handlePlayerSelect(player)}
+                        className="w-full flex items-center gap-3 p-2 hover:bg-slate-700/70 transition-colors duration-150 border-b border-slate-700/50 last:border-0"
+                      >
+                        <Avatar className="h-8 w-8 border border-slate-600">
+                          <AvatarImage src={avatarUrl} />
+                          <AvatarFallback className="bg-slate-700 text-slate-300">
+                            {player.name.slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm text-slate-200 font-medium">{player.name}</p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-orange-400">{player.position || 'N/A'}</span>
+                            <span className="text-xs text-slate-400">{(player.team || []).join(', ')}</span>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>

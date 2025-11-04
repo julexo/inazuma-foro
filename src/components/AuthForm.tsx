@@ -7,87 +7,87 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, Loader2 } from 'lucide-react' // Para mostrar errores y carga
+import { AlertCircle, Loader2, CheckCircle } from 'lucide-react'
 
 export default function AuthForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<string | null>(null); // Para mensajes (ej: revisa tu email)
+  const [message, setMessage] = useState<string | null>(null)
   const router = useRouter()
 
   const handleSignUp = async () => {
-    setError(null);
-    setMessage(null);
-    setLoading(true);
+    setError(null)
+    setMessage(null)
+    setLoading(true)
+    
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
-      // Opciones adicionales (ej: redirigir tras confirmación de email)
-      // options: {
-      //   emailRedirectTo: `${location.origin}/`,
-      // }
-    });
+    })
 
     if (error) {
-      setError(error.message);
-    } else if (data.user && data.user.identities?.length === 0) {
-       // Si Supabase requiere confirmación de email (comportamiento por defecto)
-       setMessage("¡Registro casi listo! Revisa tu correo electrónico para confirmar tu cuenta.");
+      setError(error.message)
+    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+      setMessage("Este correo ya está registrado. Por favor, inicia sesión.")
     } else if (data.user) {
-       // Si la confirmación no está habilitada o ya está confirmado
-       setMessage("¡Registro completado! Redirigiendo...");
-       router.push('/'); // Redirige a la página principal
-       router.refresh(); // Refresca para actualizar el estado del servidor
+      setMessage("¡Registro casi listo! Revisa tu correo electrónico para confirmar tu cuenta.")
     }
-    setLoading(false);
-  };
+    setLoading(false)
+  }
 
   const handleSignIn = async () => {
-    setError(null);
-    setMessage(null);
-    setLoading(true);
+    setError(null)
+    setMessage(null)
+    setLoading(true)
+    
     const { error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
-    });
+    })
 
     if (error) {
-      setError(error.message);
+      setError(error.message)
     } else {
-      // El onAuthStateChange en layout/AuthContext se encargará de redirigir
-      // No necesitamos redirigir aquí manualmente si AuthContext funciona bien.
-      // router.push('/');
-      // router.refresh();
+      setMessage("¡Inicio de sesión exitoso! Redirigiendo...")
+      setTimeout(() => {
+        router.push('/')
+        router.refresh()
+      }, 1000)
     }
-    setLoading(false);
-  };
+    setLoading(false)
+  }
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-md bg-slate-800/50 backdrop-blur-sm border-slate-700/50 shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl">Acceso / Registro</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-2xl bg-gradient-to-r from-white to-orange-400 bg-clip-text text-transparent">
+          Acceso / Registro
+        </CardTitle>
+        <CardDescription className="text-slate-400">
           Introduce tu email y contraseña para continuar.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         {/* Mensaje de error */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative flex items-center gap-2" role="alert">
-            <AlertCircle className="h-4 w-4" />
-            <span className="block sm:inline">{error}</span>
+          <div className="bg-red-900/40 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg flex items-center gap-3" role="alert">
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <span className="text-sm">{error}</span>
           </div>
         )}
+        
         {/* Mensaje informativo */}
         {message && (
-           <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative" role="alert">
-             {message}
-           </div>
+          <div className="bg-green-900/40 border border-green-500/50 text-green-200 px-4 py-3 rounded-lg flex items-center gap-3" role="alert">
+            <CheckCircle className="h-5 w-5 flex-shrink-0" />
+            <span className="text-sm">{message}</span>
+          </div>
         )}
+        
         <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email" className="text-slate-200">Email</Label>
           <Input
             id="email"
             type="email"
@@ -96,10 +96,11 @@ export default function AuthForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
+            className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500"
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="password">Contraseña</Label>
+          <Label htmlFor="password" className="text-slate-200">Contraseña</Label>
           <Input
             id="password"
             type="password"
@@ -107,19 +108,29 @@ export default function AuthForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
+            className="bg-slate-900/50 border-slate-700 text-white"
           />
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-2">
-        <Button onClick={handleSignIn} className="w-full" disabled={loading}>
+        <Button 
+          onClick={handleSignIn} 
+          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white" 
+          disabled={loading}
+        >
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Iniciar Sesión
         </Button>
-        <Button onClick={handleSignUp} className="w-full" variant="outline" disabled={loading}>
-           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-           Registrarse
+        <Button 
+          onClick={handleSignUp} 
+          className="w-full bg-slate-700 hover:bg-slate-600 text-white border-slate-600" 
+          variant="outline" 
+          disabled={loading}
+        >
+          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Registrarse
         </Button>
       </CardFooter>
     </Card>
-  );
+  )
 }

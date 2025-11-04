@@ -1,180 +1,186 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { Thread, Formation } from '@/types'
-import Header from "@/components/Header"
-import { ThreadList } from "@/components/ThreadList"
-import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import type { Thread, Formation } from '@/types'
+import type { User } from '@supabase/supabase-js'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2, Plus, FileText, ArrowLeft } from 'lucide-react'
 
 export default function MyThreadsPage() {
   const [threads, setThreads] = useState<Thread[]>([])
   const [loading, setLoading] = useState(true)
-  const { user } = useAuth()
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
 
-  const fetchMyThreads = useCallback(async () => {
+  useEffect(() => {
+    async function checkUser() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login?redirectTo=/my-threads')
+      } else {
+        setUser(user)
+      }
+    }
+    checkUser()
+  }, [router])
+
+  useEffect(() => {
     if (!user) return
 
-    try {
-      // Obtener hilos del usuario
-      const { data: threadsData, error: threadsError } = await supabase
+    type ThreadRow = {
+      id: string
+      title: string
+      content: string | null
+      created_at: string
+      user_id: string
+      formation_data?: Formation | null
+      profiles: { username?: string | null; avatar_url?: string | null } | { username?: string | null; avatar_url?: string | null }[] | null
+    }
+
+    async function loadMyThreads(userId: string) {
+      setLoading(true)
+
+      const { data: threadsData, error } = await supabase
         .from('threads')
         .select(`
           id,
-          created_at,
           title,
           content,
-          formation_data,
+          created_at,
           user_id,
-          views,
-          profiles(username, avatar_url)
+          formation_data,
+          profiles (
+            username,
+            avatar_url
+          )
         `)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
 
-      if (threadsError) {
-        console.error('Error cargando mis hilos:', threadsError)
+      if (error) {
+        console.error('Error loading threads:', error)
         setLoading(false)
         return
       }
 
-      if (!threadsData || threadsData.length === 0) {
-        setThreads([])
-        setLoading(false)
-        return
-      }
-
-      const threadIds = threadsData.map(t => t.id)
-
-      // Obtener conteo de likes
-      const { data: likesData } = await supabase
-        .from('thread_likes')
-        .select('thread_id')
-        .in('thread_id', threadIds)
-
-      const likesCount: Record<number, number> = {}
-      likesData?.forEach(like => {
-        likesCount[like.thread_id] = (likesCount[like.thread_id] || 0) + 1
-      })
-
-      // Obtener conteo de respuestas
-      const { data: repliesData } = await supabase
-        .from('post')
-        .select('thread_id')
-        .in('thread_id', threadIds)
-
-      const repliesCount: Record<number, number> = {}
-      repliesData?.forEach(reply => {
-        repliesCount[reply.thread_id] = (repliesCount[reply.thread_id] || 0) + 1
-      })
-
-      const adaptedThreads: Thread[] = threadsData.map((thread: unknown) => {
-        const threadData = thread as {
-          id: number
-          created_at: string
-          title: string
-          content: string | null
-          formation_data: Formation | null
-          user_id: string
-          views: number
-          profiles: unknown
-        }
-
-        let profile = null
-        if (Array.isArray(threadData.profiles) && threadData.profiles.length > 0) {
-          profile = threadData.profiles[0] as { username: string; avatar_url: string | null }
-        } else if (threadData.profiles && !Array.isArray(threadData.profiles)) {
-          profile = threadData.profiles as { username: string; avatar_url: string | null }
-        }
+      const adaptedThreads: Thread[] = (threadsData || []).map((row: ThreadRow) => {
+        let profile: { username?: string | null; avatar_url?: string | null } | null = null
+        if (Array.isArray(row.profiles) && row.profiles.length > 0) profile = row.profiles[0]
+        else if (row.profiles && !Array.isArray(row.profiles)) profile = row.profiles
 
         return {
-          id: threadData.id,
-          title: threadData.title,
-          content: threadData.content || '',
-          author: profile?.username || 'Usuario Desconocido',
-          authorAvatar: profile?.avatar_url || '/default-avatar.png',
-          formation: threadData.formation_data || { name: '4-4-2', players: [] },
-          timestamp: new Date(threadData.created_at),
-          replies: [], // Array vacío, el conteo lo mostramos aparte
-          views: threadData.views || 0,
-          likes: likesCount[threadData.id] || 0,
+          id: row.id,
+          title: row.title,
+          content: row.content || '',
+          created_at: row.created_at,
+          user_id: row.user_id,
+          formation_data: row.formation_data || undefined,
+          users: {
+            id: row.user_id,
+            email: profile?.username || `Usuario #${row.user_id.slice(0, 8)}`
+          }
         }
       })
 
       setThreads(adaptedThreads)
-    } catch (error) {
-      console.error('Error inesperado:', error)
-    } finally {
       setLoading(false)
     }
-  }, [user])
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
-    }
-    fetchMyThreads()
-  }, [user, router, fetchMyThreads])
+    loadMyThreads(user.id)
+  }, [user])
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-orange-800">
-        <Header />
-        <div className="flex justify-center items-center p-20">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 text-orange-400 animate-spin mx-auto mb-4" />
-            <p className="text-slate-300">Cargando tus hilos...</p>
-          </div>
-        </div>
+      <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-orange-800 flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-orange-400" />
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-orange-800">
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 via-transparent to-blue-500/10 pointer-events-none" />
-        <Header />
-
-        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 relative">
-          <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-700/50 shadow-xl p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-orange-400 bg-clip-text text-transparent">
-                  Mis Hilos
-                </h1>
-                <p className="text-slate-400 mt-1">
-                  Todos los hilos que has creado
-                </p>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                <span className="text-slate-400 text-sm">Total:</span>
-                <span className="text-2xl font-bold text-orange-400">{threads.length}</span>
-              </div>
-            </div>
-
-            {/* Lista de hilos */}
-            {threads.length === 0 ? (
-              <div className="text-center py-12 bg-slate-800/50 rounded-xl">
-                <p className="text-slate-400 mb-4">Aún no has creado ningún hilo</p>
-                <Link 
-                  href="/threads/new"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-lg transition-all duration-300"
-                >
-                  Crear tu primer hilo
-                </Link>
-              </div>
-            ) : (
-              <ThreadList threads={threads} />
-            )}
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-orange-800 p-8">
+      <div className="container mx-auto max-w-4xl">
+        {/* Header */}
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <Button variant="outline" className="bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-slate-700/50">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver
+              </Button>
+            </Link>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-orange-400 bg-clip-text text-transparent">
+              Mis Alineaciones
+            </h1>
           </div>
+          <Link href="/threads/new">
+            <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva Alineación
+            </Button>
+          </Link>
         </div>
+
+        {/* Lista de threads */}
+        {threads.length === 0 ? (
+          <Card className="bg-slate-800/50 backdrop-blur-sm border-slate-700/50">
+            <CardHeader>
+              <CardTitle className="text-slate-200">No tienes alineaciones</CardTitle>
+              <CardDescription className="text-slate-400">
+                Crea tu primera alineación para compartir con la comunidad
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/threads/new">
+                <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Crear mi primera alineación
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {threads.map((thread) => (
+              <Link key={thread.id} href={`/threads/${thread.id}`}>
+                <Card className="bg-slate-800/50 backdrop-blur-sm border-slate-700/50 hover:bg-slate-700/50 transition-all cursor-pointer">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-slate-200 hover:text-orange-400 transition-colors">
+                          {thread.title}
+                        </CardTitle>
+                        <CardDescription className="text-slate-400 mt-2">
+                          {thread.content.substring(0, 150)}
+                          {thread.content.length > 150 ? '...' : ''}
+                        </CardDescription>
+                      </div>
+                      <FileText className="h-5 w-5 text-slate-500" />
+                    </div>
+                    <div className="flex items-center gap-4 mt-4 text-xs text-slate-500">
+                      <span>
+                        {new Date(thread.created_at).toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                      {thread.formation_data && (
+                        <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded">
+                          {thread.formation_data.name}
+                        </span>
+                      )}
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   )

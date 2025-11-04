@@ -1,6 +1,7 @@
 'use client'
 
-import { Thread, Reply, Formation } from '@/types'
+import { Thread, Reply } from '@/types'
+import type { Formation } from '@/types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -10,10 +11,11 @@ import { useState } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { DragDropFormationBuilder } from './builder/DragDropFormationBuilder'
 import { formationsDatabase } from '@/lib/formationDatabase'
+import { getPlayerAvatarUrl } from '@/data/PlayerDataBase'
 
 interface ThreadDetailProps {
   thread: Thread
-  onAddReply: (threadId: number, reply: Omit<Reply, 'id' | 'timestamp'>) => void
+  onAddReply: (threadId: string, reply: Omit<Reply, 'id' | 'created_at'>) => void
   onClose: () => void
   currentUser: string | null
 }
@@ -29,10 +31,10 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
     
     setIsSubmitting(true)
     await onAddReply(thread.id, {
+      thread_id: thread.id,
       content: replyContent,
-      author: currentUser || 'Anónimo',
-      authorAvatar: '/default-avatar.png',
-      formation: replyFormation, // Incluir la formación si existe
+      user_id: currentUser || '',
+      formation_data: replyFormation,
     })
     setReplyContent('')
     setReplyFormation(undefined)
@@ -78,21 +80,21 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
           {/* Header del hilo */}
           <div className="flex items-start gap-4">
             <Avatar className="h-12 w-12 border-2 border-slate-600">
-              <AvatarImage src={thread.authorAvatar} />
-              <AvatarFallback>{thread.author.slice(0, 2)}</AvatarFallback>
+              <AvatarImage src="" />
+              <AvatarFallback>{(thread.users?.email || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-white">{thread.author}</span>
+                <span className="font-semibold text-white">{thread.users?.email || 'Usuario'}</span>
                 <span className="text-slate-400 text-sm">•</span>
                 <span className="text-slate-400 text-sm">
-                  {thread.timestamp.toLocaleDateString()}
+                  {new Date(thread.created_at).toLocaleDateString()}
                 </span>
               </div>
               <h1 className="text-2xl font-bold text-white mb-2">{thread.title}</h1>
-              {thread.formation?.name && (
+              {thread.formation_data?.name && (
                 <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                  {thread.formation.name}
+                  {thread.formation_data.name}
                 </Badge>
               )}
             </div>
@@ -103,10 +105,10 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
             <p className="text-slate-300">{thread.content}</p>
           </div>
 
-          {/* Formación mejorada con campo más realista */}
-          {thread.formation && thread.formation.players.length > 0 && (
+          {/* Formación */}
+          {thread.formation_data && thread.formation_data.players.length > 0 && (
             <div className="mt-4 bg-slate-900/30 rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-slate-300 mb-3">Alineación: {thread.formation.name}</h3>
+              <h3 className="text-sm font-semibold text-slate-300 mb-3">Alineación: {thread.formation_data.name}</h3>
               <div className="relative w-full h-96 bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-lg overflow-hidden shadow-2xl border-2 border-green-800">
                 {/* Textura del césped */}
                 <div className="absolute inset-0 opacity-10">
@@ -153,7 +155,7 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                 </svg>
 
                 {/* Jugadores con mejor diseño */}
-                {thread.formation.players.map((player) => (
+                {thread.formation_data.players.map((player) => (
                   player.playerData && (
                     <div
                       key={player.id}
@@ -163,7 +165,7 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                       <div className="relative group">
                         <div className="absolute -inset-2 bg-blue-400/20 rounded-full blur-md group-hover:bg-blue-400/40 transition-all" />
                         <Avatar className="h-14 w-14 border-3 border-white ring-4 ring-blue-500 shadow-2xl relative">
-                          <AvatarImage src={player.playerData.avatar} />
+                          <AvatarImage src={getPlayerAvatarUrl(player.playerData.avatar)} />
                           <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold">
                             {player.playerData.name.slice(0, 2)}
                           </AvatarFallback>
@@ -187,7 +189,7 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
       <div className="space-y-4">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
-          Respuestas ({thread.replies.length})
+          Respuestas ({thread.replies?.length ?? 0})
         </h2>
 
         {/* Formulario de respuesta mejorado */}
@@ -258,7 +260,7 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                   </div>
                   <DragDropFormationBuilder
                     formation={replyFormation || formationsDatabase['4-4-2']}
-                    onFormationChange={setReplyFormation}
+                    onFormationChange={(formation) => setReplyFormation(formation as Formation)}
                   />
                 </div>
               )}
@@ -285,28 +287,27 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
         )}
 
         {/* Lista de respuestas con campo mejorado */}
-        {thread.replies.map((reply) => (
+        {thread.replies?.map((reply) => (
           <Card key={reply.id} className="bg-slate-800/30 backdrop-blur-sm border-slate-700/50 p-4">
             <div className="flex items-start gap-3">
               <Avatar className="h-10 w-10 border-2 border-slate-600">
-                <AvatarImage src={reply.authorAvatar} />
-                <AvatarFallback>{reply.author.slice(0, 2)}</AvatarFallback>
+                <AvatarImage src="" />
+                <AvatarFallback>{(reply.users?.email || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-semibold text-white">{reply.author}</span>
+                  <span className="font-semibold text-white">{reply.users?.email || 'Usuario'}</span>
                   <span className="text-slate-400 text-sm">
-                    {reply.timestamp.toLocaleDateString()}
+                    {new Date(reply.created_at).toLocaleDateString()}
                   </span>
                 </div>
                 <p className="text-slate-300">{reply.content}</p>
-                
-                {/* Formación en respuesta con diseño mejorado */}
-                {reply.formation && reply.formation.players.length > 0 && (
+
+                {reply.formation_data && reply.formation_data.players.length > 0 && (
                   <div className="mt-3 bg-slate-900/30 rounded-lg p-3">
                     <h4 className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-2">
                       <Layout className="h-3 w-3" />
-                      Alineación: {reply.formation.name}
+                      Alineación: {reply.formation_data.name}
                     </h4>
                     <div className="relative w-full h-80 bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-lg overflow-hidden shadow-2xl border-2 border-green-800">
                       {/* Textura del césped */}
@@ -332,7 +333,7 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                       </svg>
 
                       {/* Jugadores de la respuesta */}
-                      {reply.formation.players.map((player) => (
+                      {reply.formation_data.players.map((player) => (
                         player.playerData && (
                           <div
                             key={player.id}
@@ -342,7 +343,7 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                             <div className="relative group">
                               <div className="absolute -inset-2 bg-green-400/20 rounded-full blur-md group-hover:bg-green-400/40 transition-all" />
                               <Avatar className="h-12 w-12 border-3 border-white ring-4 ring-green-500 shadow-2xl relative">
-                                <AvatarImage src={player.playerData.avatar} />
+                                <AvatarImage src={getPlayerAvatarUrl(player.playerData.avatar)} />
                                 <AvatarFallback className="bg-gradient-to-br from-green-500 to-green-700 text-white font-bold">
                                   {player.playerData.name.slice(0, 2)}
                                 </AvatarFallback>

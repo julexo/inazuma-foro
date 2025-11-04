@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { useRouter, useSearchParams } from 'next/navigation' // Importamos useRouter y useSearchParams
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, Loader2, LogIn, Mail } from 'lucide-react' // Añadir Mail aquí
+import { AlertCircle, Loader2, LogIn, Mail, CheckCircle } from 'lucide-react'
 
 export default function LoginForm() {
   const searchParams = useSearchParams()
@@ -16,7 +16,8 @@ export default function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const router = useRouter() // Inicializamos useRouter
+  const [message, setMessage] = useState<string | null>(null)
+  const router = useRouter()
 
   // Efecto para detectar el parámetro verify
   useEffect(() => {
@@ -25,29 +26,39 @@ export default function LoginForm() {
     }
   }, [searchParams])
 
-  const handleSignIn = async () => {
-    setError(null);
-    setLoading(true);
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setMessage(null)
+    setLoading(true)
+
+    if (!email.trim() || !password.trim()) {
+      setError('Por favor, completa todos los campos')
+      setLoading(false)
+      return
+    }
+    
     const { error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
-    });
+    })
 
     if (error) {
-      setError(error.message);
-      setLoading(false); // Detenemos la carga si hay error
+      setError(error.message)
+      setLoading(false)
     } else {
-      // El onAuthStateChange en AuthContext/layout.tsx se encargará de redirigir
-      // Opcionalmente, puedes forzar un refresh o push aquí si es necesario
-      router.push('/'); // Ya no es estrictamente necesario aquí
-      router.refresh(); // Forzamos refresh para asegurar que el layout detecte el cambio
+      setMessage("¡Inicio de sesión exitoso! Redirigiendo...")
+      setTimeout(() => {
+        const redirectTo = searchParams.get('redirectTo') || '/'
+        router.push(redirectTo)
+        router.refresh()
+      }, 1000)
     }
-    // setLoading(false); // No necesitamos esto aquí si hay redirección/refresh
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    handleSignIn();
+    handleSignIn(e);
   };
 
   return (
@@ -83,6 +94,15 @@ export default function LoginForm() {
                 <Mail className="h-4 w-4" />
               </div>
               <span className="text-sm font-medium">{verifyMessage}</span>
+            </div>
+          )}
+
+          {message && (
+            <div className="bg-green-900/40 border border-green-500/50 text-green-200 px-4 py-3 rounded-lg flex items-center gap-3" role="alert">
+              <div className="p-2 rounded-lg bg-green-500/20">
+                <CheckCircle className="h-4 w-4" />
+              </div>
+              <span className="text-sm font-medium">{message}</span>
             </div>
           )}
 

@@ -1,46 +1,42 @@
 // src/types/index.ts
 
-// Del archivo PlayerDatabase.ts
-export interface PlayerData {
-  id: string;
-  name: string;
-  position: 'GK' | 'DF' | 'MF' | 'FW';
-  team: string[];
-  element: 'Fuego' | 'Viento' | 'Bosque' | 'Montaña';
-  avatar: string;
-}
+import type { Player as DBPlayer } from '@/data/PlayerDataBase'
 
-// Del archivo App.tsx
-export interface Player {
-  id: number; // Este es el ID de la POSICIÓN (1-11)
-  name: string; // Nombre por defecto (ej: "Defensa") o nombre del jugador
-  position: { x: number; y: number }; // Posición en % (ej: 50, 50)
-  playerData?: PlayerData; // Los datos reales del jugador (opcional)
+export interface FormationSlot {
+  id: number
+  name: string
+  position: { x: number; y: number }
+  playerData?: DBPlayer
 }
 
 export interface Formation {
-  name: string; // Ej: "4-4-2"
-  players: Player[];
-}
-
-export interface Reply {
-  id: number;
-  author: string;
-  authorAvatar: string;
-  content: string;
-  timestamp: Date;
-  formation?: Formation;
+  name: string
+  players: FormationSlot[]
 }
 
 export interface Thread {
-  id: number;
-  title: string;
-  author: string;
-  authorAvatar: string;
-  content: string;
-  formation: Formation;
-  timestamp: Date;
-  replies: Reply[];
-  views: number;
-  likes: number;
+  id: string
+  title: string
+  content: string
+  created_at: string
+  user_id: string
+  formation_data?: Formation
+  users?: {
+    id: string
+    email: string
+  }
+  replies?: Reply[]
+}
+
+export interface Reply {
+  id: string
+  thread_id: string
+  content: string
+  created_at: string
+  user_id: string
+  formation_data?: Formation
+  users?: {
+    id: string
+    email: string
+  }
 }

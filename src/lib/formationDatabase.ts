@@ -1,7 +1,6 @@
-import { Formation } from '@/types'; // Importa el tipo 'Formation'
+import type { Formation } from '@/types'
 
-// Define las plantillas de las formaciones
-const formationTemplates: Record<string, Formation> = {
+export const formationsDatabase: Record<string, Formation> = {
   "4-4-2": {
     name: "4-4-2",
     players: [
@@ -53,6 +52,4 @@ const formationTemplates: Record<string, Formation> = {
   // ... (Puedes añadir más formaciones aquí)
 };
 
-// Exportamos las plantillas y una lista de sus nombres
-export const formationsDatabase = formationTemplates;
-export const formationNames = Object.keys(formationTemplates); // ["4-4-2", "4-3-3", "5-3-2"]
+export const formationNames = Object.keys(formationsDatabase); // ["4-4-2", "4-3-3", "5-3-2"]

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { Thread } from '@/types'
+import type { Formation } from '@/types'
 import Header from "@/components/Header"
 import { ThreadList } from "@/components/ThreadList"
 import { useAuth } from '@/context/AuthContext'
@@ -19,7 +20,6 @@ export default function SavedThreadsPage() {
     if (!user) return
 
     try {
-      // Obtener IDs de hilos guardados
       const { data: savedData, error: savedError } = await supabase
         .from('saved_threads')
         .select('thread_id')
@@ -35,7 +35,6 @@ export default function SavedThreadsPage() {
         return
       }
 
-      // Obtener datos de los hilos
       const { data: threadsData, error: threadsError } = await supabase
         .from('threads')
         .select(`
@@ -45,7 +44,6 @@ export default function SavedThreadsPage() {
           content,
           formation_data,
           user_id,
-          views,
           profiles(username, avatar_url)
         `)
         .in('id', threadIds)
@@ -53,49 +51,40 @@ export default function SavedThreadsPage() {
 
       if (threadsError) throw threadsError
 
-      // Obtener likes
-      const { data: likesData } = await supabase
-        .from('thread_likes')
-        .select('thread_id')
-        .in('thread_id', threadIds)
+      type Profile = { username?: string | null; avatar_url?: string | null } | null
+      type Row = {
+        id: string | number
+        created_at: string
+        title: string
+        content: string | null
+        formation_data: unknown
+        user_id: string
+        profiles: Profile | Profile[] | null
+      }
 
-      const likesCount: Record<number, number> = {}
-      likesData?.forEach(like => {
-        likesCount[like.thread_id] = (likesCount[like.thread_id] || 0) + 1
-      })
+      const adaptedThreads: Thread[] = (threadsData || []).map((row: Row) => {
+        const formation = (row.formation_data as Formation) || { name: '4-4-2', players: [] }
 
-      const adaptedThreads: Thread[] = threadsData?.map((thread: unknown) => {
-        const threadData = thread as {
-          id: number
-          created_at: string
-          title: string
-          content: string | null
-          formation_data: unknown
-          user_id: string
-          views: number
-          profiles: unknown
-        }
-
-        let profile = null
-        if (Array.isArray(threadData.profiles) && threadData.profiles.length > 0) {
-          profile = threadData.profiles[0]
-        } else if (threadData.profiles && !Array.isArray(threadData.profiles)) {
-          profile = threadData.profiles
+        let profile: Profile = null
+        if (Array.isArray(row.profiles) && row.profiles.length > 0) {
+          profile = row.profiles[0]
+        } else if (row.profiles && !Array.isArray(row.profiles)) {
+          profile = row.profiles
         }
 
         return {
-          id: threadData.id,
-          title: threadData.title,
-          content: threadData.content || '',
-          author: profile?.username || 'Usuario Desconocido',
-          authorAvatar: profile?.avatar_url || '/default-avatar.png',
-          formation: (threadData.formation_data as Thread['formation']) || { name: '4-4-2', players: [] },
-          timestamp: new Date(threadData.created_at),
-          replies: [],
-          views: threadData.views || 0,
-          likes: likesCount[threadData.id] || 0,
+          id: String(row.id),
+          title: row.title,
+          content: row.content || '',
+          created_at: row.created_at,
+          user_id: row.user_id,
+          formation_data: formation,
+          users: {
+            id: row.user_id,
+            email: profile?.username || `Usuario #${row.user_id.slice(0, 8)}`
+          }
         }
-      }) || []
+      })
 
       setThreads(adaptedThreads)
     } catch (error) {

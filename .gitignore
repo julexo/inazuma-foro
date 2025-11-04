@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Inazuma scrapper - mantener solo lo necesario
+Inazuma_web_scrapper/*.html
+Inazuma_web_scrapper/*_files/
+Inazuma_web_scrapper/avatar_images/
+Inazuma_web_scrapper/players.json
+Inazuma_web_scrapper/missing_avatars.txt
+Inazuma_web_scrapper/*.py
+Inazuma_web_scrapper/__pycache__/

@@ -20,7 +20,7 @@ export default function HomePage() {
 
   async function fetchThreads() {
     try {
-      // Obtener threads
+      // Obtener threads con perfiles (username, avatar) si existen
       const { data: threadsData, error: threadsError } = await supabase
         .from('threads')
         .select(`
@@ -30,7 +30,6 @@ export default function HomePage() {
           content,
           formation_data,
           user_id,
-          views,
           profiles(username, avatar_url)
         `)
         .order('created_at', { ascending: false })
@@ -42,68 +41,44 @@ export default function HomePage() {
       }
 
       if (!threadsData) {
-        console.log('No hay datos de hilos')
         setThreads([])
         setFilteredThreads([])
         setLoading(false)
         return
       }
 
-      // Obtener conteo de likes para cada thread
-      const threadIds = threadsData.map(t => t.id)
-      
-      const { data: likesData, error: likesError } = await supabase
-        .from('thread_likes')
-        .select('thread_id')
-        .in('thread_id', threadIds)
-
-      if (likesError) {
-        console.warn('Error cargando likes:', likesError)
+      type ThreadRow = {
+        id: string | number
+        created_at: string
+        title: string
+        content: string | null
+        formation_data: unknown
+        user_id: string
+        profiles: null | { username?: string | null; avatar_url?: string | null } | Array<{ username?: string | null; avatar_url?: string | null }>
       }
 
-      // Contar likes por thread
-      const likesCount: Record<number, number> = {}
-      likesData?.forEach(like => {
-        likesCount[like.thread_id] = (likesCount[like.thread_id] || 0) + 1
-      })
-
-      const adaptedThreads: Thread[] = threadsData.map((thread: unknown) => {
-        const threadData = thread as {
-          id: number
-          created_at: string
-          title: string
-          content: string | null
-          formation_data: unknown
-          user_id: string
-          views: number
-          profiles: unknown
-        }
-
-        const safeFormation: Formation = (threadData.formation_data as Formation) || {
+      const adaptedThreads: Thread[] = (threadsData as ThreadRow[]).map((t) => {
+        const safeFormation: Formation = (t.formation_data as Formation) || {
           name: '4-4-2 (Defecto)',
           players: []
         }
-        
-        // Probar diferentes estructuras
-        let profile = null
-        
-        if (Array.isArray(threadData.profiles) && threadData.profiles.length > 0) {
-          profile = threadData.profiles[0]
-        } else if (threadData.profiles && !Array.isArray(threadData.profiles)) {
-          profile = threadData.profiles
-        }
+
+        // Resolver perfíl (puede venir como objeto o array)
+        let profile: { username?: string | null; avatar_url?: string | null } | null = null
+        if (Array.isArray(t.profiles) && t.profiles.length > 0) profile = t.profiles[0]
+        else if (t.profiles && !Array.isArray(t.profiles)) profile = t.profiles
 
         return {
-          id: threadData.id,
-          title: threadData.title,
-          content: threadData.content || '',
-          author: profile?.username || `Usuario #${threadData.user_id?.slice(0, 8)}` || 'Usuario Desconocido',
-          authorAvatar: profile?.avatar_url || '/default-avatar.png',
-          formation: safeFormation,
-          timestamp: new Date(threadData.created_at),
-          replies: [],
-          views: threadData.views || 0,
-          likes: likesCount[threadData.id] || 0,
+          id: String(t.id),
+          title: t.title,
+          content: t.content || '',
+          created_at: t.created_at,
+          user_id: t.user_id,
+          formation_data: safeFormation,
+          users: {
+            id: t.user_id,
+            email: profile?.username || `Usuario #${t.user_id?.slice(0, 8)}`
+          }
         }
       })
 
@@ -119,29 +94,27 @@ export default function HomePage() {
   const handleFilterChange = (filters: { playerName: string; formation: string; sortBy: string }) => {
     let filtered = [...threads]
 
-    // Filtrar por nombre de jugador
+    // Filtrar por nombre de jugador (en formation_data)
     if (filters.playerName.trim()) {
+      const q = filters.playerName.toLowerCase()
       filtered = filtered.filter(thread => {
-        if (!thread.formation || !thread.formation.players) return false
-        return thread.formation.players.some(player => 
-          player.playerData?.name.toLowerCase().includes(filters.playerName.toLowerCase())
-        )
+        const players = thread.formation_data?.players || []
+        return players.some(p => p.playerData?.name.toLowerCase().includes(q))
       })
     }
 
-    // Filtrar por formación
+    // Filtrar por nombre de formación
     if (filters.formation && filters.formation !== 'all') {
-      filtered = filtered.filter(thread => 
-        thread.formation?.name === filters.formation
-      )
+      filtered = filtered.filter(thread => thread.formation_data?.name === filters.formation)
     }
 
-    // Ordenar (usando filters.sortBy directamente)
-    if (filters.sortBy === 'popular') {
-      filtered.sort((a, b) => b.views - a.views)
-    } else {
-      filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-    }
+    // Ordenar (por fecha, ya que views/likes no están en el tipo Thread)
+    filtered.sort((a, b) => {
+      const da = new Date(a.created_at).getTime()
+      const db = new Date(b.created_at).getTime()
+      // Si pidieron "popular", mantenemos el mismo criterio por fecha (no hay likes en Thread)
+      return db - da
+    })
 
     setFilteredThreads(filtered)
   }

@@ -3,73 +3,71 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
-import { Formation } from '@/types'
+import type { Formation } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { DragDropFormationBuilder } from '@/components/builder/DragDropFormationBuilder'
-import { Loader2, Send, AlertCircle, LucideLayoutTemplate } from 'lucide-react' 
+import { Loader2, Send, AlertCircle, LayoutTemplate, ArrowLeft, Home } from 'lucide-react' 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { formationsDatabase, formationNames } from '@/lib/formationDatabase' 
+import { formationsDatabase, formationNames } from '@/lib/formationDatabase'
+import Link from 'next/link'
 
 export default function NewThreadPage() {
-
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  // 2. Estado inicial: Carga la plantilla "4-4-2" por defecto
   const [formation, setFormation] = useState<Formation>(formationsDatabase['4-4-2'])
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const [error, setError] = useState<string | null>(null);
 
-  // 3. Función para manejar el cambio de formación
   const handleFormationChange = (formationName: string) => {
-    const newFormationTemplate = formationsDatabase[formationName];
+    const newFormationTemplate = formationsDatabase[formationName]
     if (newFormationTemplate) {
-      // Reiniciamos la formación a la plantilla,
-      // borrando los jugadores que se hayan puesto.
-      setFormation(newFormationTemplate);
+      setFormation(newFormationTemplate)
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null);
-    setLoading(true);
+    setError(null)
+    setLoading(true)
 
-    // ... (Validación y lógica de getUser) ...
-    const assignedPlayers = formation.players.filter(p => p.playerData).length;
+    const assignedPlayers = formation.players.filter(p => p.playerData).length
+    
     if (title.trim() === '' || content.trim() === '') {
-      setError('El título y el contenido no pueden estar vacíos.');
-      setLoading(false);
-      return;
+      setError('El título y el contenido no pueden estar vacíos.')
+      setLoading(false)
+      return
     }
+    
     if (assignedPlayers < 11) {
-      setError('¡Debes asignar los 11 jugadores a la alineación!');
-      setLoading(false);
-      return;
+      setError('¡Debes asignar los 11 jugadores a la alineación!')
+      setLoading(false)
+      return
     }
+    
     const { data: { user } } = await supabase.auth.getUser()
+    
     if (!user) {
-      setError('Debes iniciar sesión para crear un hilo.');
-      router.push('/login');
-      return;
+      setError('Debes iniciar sesión para crear un hilo.')
+      setLoading(false)
+      router.push('/login')
+      return
     }
 
-    // Guardamos en Supabase
     const { error: insertError } = await supabase
       .from('threads')
       .insert({
         title: title,
         user_id: user.id,
         content: content,
-        // Guardamos el objeto 'formation' completo
         formation_data: formation
       })
 
     if (insertError) {
-      setError('Error al crear el hilo: ' + insertError.message);
-      setLoading(false);
+      setError('Error al crear el hilo: ' + insertError.message)
+      setLoading(false)
     } else {
       router.push('/')
       router.refresh()
@@ -79,12 +77,34 @@ export default function NewThreadPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-orange-800">
       <div className="container mx-auto max-w-6xl p-8">
-        {/* Header Mejorado */}
+        {/* Botones de navegación */}
+        <div className="mb-6 flex items-center gap-4">
+          <Link href="/">
+            <Button 
+              variant="outline" 
+              className="bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-slate-700/50 hover:text-white backdrop-blur-sm"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver
+            </Button>
+          </Link>
+          <Link href="/">
+            <Button 
+              variant="outline" 
+              className="bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-slate-700/50 hover:text-white backdrop-blur-sm"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Inicio
+            </Button>
+          </Link>
+        </div>
+
+        {/* Header */}
         <header className="mb-8 bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 shadow-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-700/50">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-orange-500/20">
-                <LucideLayoutTemplate className="h-8 w-8 text-orange-400" />
+                <LayoutTemplate className="h-8 w-8 text-orange-400" />
               </div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-orange-400 bg-clip-text text-transparent">
                 Crear Nueva Alineación
@@ -99,14 +119,14 @@ export default function NewThreadPage() {
         </header>
       
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Alerta de Error Mejorada */}
+          {/* Alerta de Error */}
           {error && (
-          <div className="bg-red-900/40 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg backdrop-blur-sm" role="alert">
-            <div className="p-2 rounded-lg bg-red-500/20">
-              <AlertCircle className="h-5 w-5" />
+            <div className="bg-red-900/40 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg backdrop-blur-sm" role="alert">
+              <div className="p-2 rounded-lg bg-red-500/20">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <span className="block sm:inline">{error}</span>
             </div>
-            <span className="block sm:inline">{error}</span>
-          </div>
           )}
 
           {/* Sección de Detalles */}
@@ -130,7 +150,7 @@ export default function NewThreadPage() {
                 value={content} 
                 onChange={(e) => setContent(e.target.value)} 
                 placeholder="Explica por qué esta alineación es buena, sus puntos fuertes, débiles, y cómo jugarla..." 
-                className="w-full min-h-[150px] p-4 rounded-lg bg-slate-900/50 border-slate-600 text-white focus:ring-orange-500/50 focus:border-orange-500/50 transition-all duration-300" 
+                className="w-full min-h-[150px] p-4 rounded-lg bg-slate-900/50 border border-slate-600 text-white focus:ring-orange-500/50 focus:border-orange-500/50 transition-all duration-300 resize-none" 
                 disabled={loading}
               />
             </div>
@@ -146,7 +166,9 @@ export default function NewThreadPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 text-white border-slate-700">
                   {formationNames.map((name) => (
-                    <SelectItem key={name} value={name} className="focus:bg-slate-700 cursor-pointer hover:bg-slate-800/80">{name}</SelectItem>
+                    <SelectItem key={name} value={name} className="focus:bg-slate-700 cursor-pointer hover:bg-slate-800/80">
+                      {name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -165,7 +187,7 @@ export default function NewThreadPage() {
             </div>
           </div>
 
-          {/* Botón Submit Mejorado */}
+          {/* Botón Submit */}
           <Button
             type="submit"
             size="lg"
@@ -187,5 +209,5 @@ export default function NewThreadPage() {
         </form>
       </div>
     </main>
-  );
+  )
 }

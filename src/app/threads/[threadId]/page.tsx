@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Thread, Reply, Formation } from '@/types'; // Quitamos PlayerData (no se usa aquí)
+import { Thread, Reply, Formation } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
@@ -12,14 +12,32 @@ import Link from 'next/link';
 
 export default function ThreadPage() {
   const { user } = useAuth();
-  const params = useParams();
+  const params = useParams<{ threadId: string }>(); // Tipado estricto del parámetro
   const router = useRouter();
-  
-  // Asumiendo que tu carpeta es [threadId] (minúscula i)
-  const threadId = params.threadId as string; 
+  const threadId = params.threadId;
 
   const [thread, setThread] = useState<Thread | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Tipos de filas devueltas por Supabase
+  type ProfileRow = { username: string | null; avatar_url: string | null } | null
+  type ThreadRow = {
+    id: string | number
+    title: string
+    content: string | null
+    created_at: string
+    user_id: string
+    formation_data: Formation | null
+    profiles: ProfileRow | ProfileRow[] | null
+  }
+  type PostRow = {
+    id: string | number
+    content: string | null
+    created_at: string
+    user_id: string
+    formation_data: Formation | null
+    profiles: ProfileRow | ProfileRow[] | null
+  }
 
   const fetchThreadAndReplies = useCallback(async () => {
     if (!threadId) {
@@ -28,7 +46,6 @@ export default function ThreadPage() {
     }
     setLoading(true);
     
-    // Consulta del Hilo - intentemos sin especificar la foreign key
     const { data: threadData, error: threadError } = await supabase
       .from('threads')
       .select(`
@@ -41,7 +58,7 @@ export default function ThreadPage() {
         profiles(username, avatar_url)
       `)
       .eq('id', threadId)
-      .single(); 
+      .single();
 
     if (threadError) {
       console.error("Error fetching thread:", threadError); 
@@ -49,7 +66,6 @@ export default function ThreadPage() {
       return;
     }
 
-    // Consulta de Posts/Comentarios
     const { data: postsData, error: postsError } = await supabase
       .from('post')
       .select(`
@@ -63,94 +79,58 @@ export default function ThreadPage() {
       .eq('thread_id', threadId)
       .order('created_at', { ascending: true });
     
+    // Adapt replies -> Reply
+    let adaptedReplies: Reply[] = []
     if (postsError) {
       console.error("Error fetching replies:", postsError);
-    }
+    } else if (postsData) {
+      adaptedReplies = (postsData as PostRow[]).map((post): Reply => {
+        let profile: ProfileRow = null
+        const raw = post.profiles
+        if (Array.isArray(raw) && raw.length > 0) profile = raw[0]
+        else if (raw && !Array.isArray(raw)) profile = raw
 
-    // Log completo para debug
-    console.log('RAW Thread Data:', threadData);
-    console.log('RAW Posts Data:', postsData);
-
-    // Adaptar los datos de Posts
-    let adaptedReplies: Reply[] = [];
-    if (postsData) {
-      adaptedReplies = postsData.map((post: unknown) => {
-        const postData = post as {
-          id: number
-          content: string
-          created_at: string
-          formation_data: unknown
-          user_id: string
-          profiles: unknown
-        }
-
-        // Probar diferentes estructuras
-        let profile = null;
-        
-        if (Array.isArray(postData.profiles) && postData.profiles.length > 0) {
-          profile = postData.profiles[0];
-        } else if (postData.profiles && !Array.isArray(postData.profiles)) {
-          profile = postData.profiles;
-        }
-        
-        console.log('Processing reply:', {
-          post_id: postData.id,
-          user_id: postData.user_id,
-          profiles_raw: postData.profiles,
-          profile_extracted: profile,
-          username: profile?.username
-        });
-
-        const formationData = postData.formation_data as Formation | null;
-        const isValidFormation = formationData && 
-          typeof formationData === 'object' && 
-          'name' in formationData && 
-          'players' in formationData;
+        const formation = post.formation_data
+        const valid = !!(formation && typeof formation === 'object' && 'name' in formation && 'players' in formation)
 
         return {
-          id: postData.id,
-          content: postData.content || '',
-          author: profile?.username || `Usuario #${postData.user_id?.slice(0, 8)}` || 'Anónimo',
-          authorAvatar: profile?.avatar_url || '/default-avatar.png',
-          formation: isValidFormation ? formationData : undefined,
-          timestamp: new Date(postData.created_at),
-        };
-      });
+          id: String(post.id),
+          thread_id: threadId,
+          content: post.content || '',
+          created_at: post.created_at,
+          user_id: post.user_id,
+          formation_data: valid ? (formation as Formation) : undefined,
+          users: {
+            id: post.user_id,
+            email: profile?.username || `Usuario #${post.user_id?.slice(0, 8)}`
+          }
+        }
+      })
     }
 
-    // Adaptar los datos del Hilo
+    // Adapt thread -> Thread
     if (threadData) {
-      // Probar diferentes estructuras para el thread
-      let profile = null;
-      
-      if (Array.isArray(threadData.profiles) && threadData.profiles.length > 0) {
-        profile = threadData.profiles[0];
-      } else if (threadData.profiles && !Array.isArray(threadData.profiles)) {
-        profile = threadData.profiles;
-      }
-      
-      console.log('Processing thread:', {
-        thread_id: threadData.id,
-        user_id: threadData.user_id,
-        profiles_raw: threadData.profiles,
-        profile_extracted: profile,
-        username: profile?.username
-      });
-      
+      const t = threadData as ThreadRow
+      let profile: ProfileRow = null
+      const raw = t.profiles
+      if (Array.isArray(raw) && raw.length > 0) profile = raw[0]
+      else if (raw && !Array.isArray(raw)) profile = raw
+
       setThread({
-        id: threadData.id,
-        title: threadData.title,
-        content: threadData.content || '',
-        author: profile?.username || `Usuario #${threadData.user_id?.slice(0, 8)}` || 'Anónimo',
-        authorAvatar: profile?.avatar_url || '/default-avatar.png',
-        formation: threadData.formation_data || { name: 'N/A', players: [] },
-        timestamp: new Date(threadData.created_at),
-        replies: adaptedReplies,
-        views: 0, 
-        likes: 0, 
-      });
+        id: String(t.id),
+        title: t.title,
+        content: t.content || '',
+        created_at: t.created_at,
+        user_id: t.user_id,
+        formation_data: t.formation_data || { name: 'N/A', players: [] },
+        users: {
+          id: t.user_id,
+          email: profile?.username || `Usuario #${t.user_id?.slice(0, 8)}`
+        },
+        replies: adaptedReplies
+      })
     }
-    
+
     setLoading(false);
   }, [threadId]);
 
@@ -159,28 +139,24 @@ export default function ThreadPage() {
   }, [fetchThreadAndReplies]);
 
   // --- 3. FUNCIÓN PARA AÑADIR COMENTARIOS ---
-  const handleAddReply = async (threadId: number, reply: Omit<Reply, 'id' | 'timestamp'>) => {
+  const handleAddReply = async (threadId: string, reply: Omit<Reply, 'id' | 'created_at'>) => {
     if (!user || !thread) {
-      alert("Debes iniciar sesión para comentar.");
       router.push('/login');
       return;
     }
-    
-    
-    const { data, error } = await supabase
+
+    const { error } = await supabase
       .from('post')
       .insert({
-        content: reply.content,     
-        formation_data: reply.formation, // <-- Se añade la alineación
-        thread_id: threadId,        
-        user_id: user.id,           
+        content: reply.content,
+        formation_data: reply.formation_data,
+        thread_id: threadId,
+        user_id: user.id,
       })
-      .select();
 
     if (error) {
       alert("Error al publicar la respuesta: " + error.message);
-    } else if (data) {
-      // Si funciona, volvemos a cargar todo para mostrar el nuevo comentario
+    } else {
       await fetchThreadAndReplies();
     }
   };
