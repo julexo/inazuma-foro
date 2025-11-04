@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-import { Analytics } from "@vercel/analytics/react"; // <-- Paso 2.1: Importa Analytics
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,9 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Victory Road Foro", // <-- Actualiza tu título
-  description: "Foro para crear y discutir alineaciones de Inazuma Eleven", // <-- Actualiza tu descripción
-  // No necesitas 'icons: null' si usas el método de archivos en /app
+  title: "Victory Road Foro",
+  description: "Foro para crear y discutir alineaciones de Inazuma Eleven",
 };
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es"> 
+    <html lang="es">
       <head>
         <meta name="apple-mobile-web-app-title" content="VRF" />
       </head>
@@ -35,9 +35,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           {children}
-          <Analytics /> 
+          <Analytics />
+          <SpeedInsights />
         </AuthProvider>
-        
       </body>
     </html>
   );
