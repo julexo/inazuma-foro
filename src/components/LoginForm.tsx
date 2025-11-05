@@ -1,161 +1,187 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, Loader2, LogIn, Mail, CheckCircle } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Loader2, Mail, Lock, AlertCircle, LogIn } from 'lucide-react'
+import { TurnstileWidget } from '@/components/TurnstileWidget'
 
 export default function LoginForm() {
+  const router = useRouter()
   const searchParams = useSearchParams()
-  const [verifyMessage, setVerifyMessage] = useState<string | null>(null)
+  const redirectTo = searchParams?.get('redirectTo') || '/'
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-  const router = useRouter()
 
-  // Efecto para detectar el parámetro verify
-  useEffect(() => {
-    if (searchParams.get('verify') === 'true') {
-      setVerifyMessage('¡Registro exitoso! Por favor, verifica tu correo electrónico para activar tu cuenta.')
-    }
-  }, [searchParams])
-
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    setMessage(null)
-    setLoading(true)
 
-    if (!email.trim() || !password.trim()) {
-      setError('Por favor, completa todos los campos')
-      setLoading(false)
+    // Validar captcha
+    if (!captchaToken) {
+      setError('Por favor, completa la verificación de seguridad')
       return
     }
-    
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    })
 
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-    } else {
-      setMessage("¡Inicio de sesión exitoso! Redirigiendo...")
-      setTimeout(() => {
-        const redirectTo = searchParams.get('redirectTo') || '/'
-        router.push(redirectTo)
-        router.refresh()
-      }, 1000)
+    setIsLoading(true)
+    try {
+      // Verificar captcha primero
+      const verifyResponse = await fetch('/api/verify-captcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: captchaToken }),
+      })
+      const verifyData = await verifyResponse.json()
+      if (!verifyData.success) {
+        setError('Verificación de seguridad fallida. Intenta de nuevo.')
+        setCaptchaToken(null)
+        setIsLoading(false)
+        return
+      }
+
+      // Login con Supabase
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) {
+        setError(signInError.message.includes('Invalid')
+          ? 'Email o contraseña incorrectos'
+          : signInError.message
+        )
+        setIsLoading(false)
+        return
+      }
+
+      router.push(redirectTo)
+      router.refresh()
+    } catch (err: unknown) {
+      // Mostrar detalles útiles si es un fallo de red/CSP
+      if (err instanceof TypeError) {
+        setError('No se pudo contactar con el servicio. Revisa tu conexión o configuración de CSP.')
+        console.error('Failed to fetch (posible CSP o red):', err)
+      } else {
+        setError('Error inesperado. Intenta de nuevo.')
+        console.error('Error en login:', err)
+      }
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSignIn(e);
-  };
-
   return (
-    <Card className="w-full max-w-sm bg-slate-800/50 backdrop-blur-sm border-slate-700/50 shadow-xl">
-      <form onSubmit={handleSubmit}>
-        <CardHeader className="space-y-3 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-orange-500/20">
-              <LogIn className="h-6 w-6 text-orange-400" />
-            </div>
-            <CardTitle className="text-2xl bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              Iniciar Sesión
-            </CardTitle>
+    <Card className="bg-slate-800/90 backdrop-blur-xl border-slate-700/50 shadow-2xl">
+      <CardHeader className="space-y-1 pb-6">
+        <div className="flex items-center justify-center mb-4">
+          <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
+            <LogIn className="h-8 w-8 text-white" />
           </div>
-          <CardDescription className="text-slate-400">
-            Introduce tu email y contraseña para acceder.
-          </CardDescription>
-        </CardHeader>
+        </div>
+        <CardTitle className="text-2xl font-bold text-center text-white">
+          Iniciar Sesión
+        </CardTitle>
+        <CardDescription className="text-center text-slate-400">
+          Ingresa tus credenciales para acceder a tu cuenta
+        </CardDescription>
+      </CardHeader>
 
-        <CardContent className="grid gap-4">
-          {error && (
-            <div className="bg-red-900/40 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg flex items-center gap-3 animate-in slide-in-from-top-2" role="alert">
-              <div className="p-2 rounded-lg bg-red-500/20">
-                <AlertCircle className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-medium">{error}</span>
-            </div>
-          )}
-
-          {verifyMessage && (
-            <div className="bg-blue-900/40 border border-blue-500/50 text-blue-200 px-4 py-3 rounded-lg flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/20">
-                <Mail className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-medium">{verifyMessage}</span>
-            </div>
-          )}
-
-          {message && (
-            <div className="bg-green-900/40 border border-green-500/50 text-green-200 px-4 py-3 rounded-lg flex items-center gap-3" role="alert">
-              <div className="p-2 rounded-lg bg-green-500/20">
-                <CheckCircle className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-medium">{message}</span>
-            </div>
-          )}
-
-          <div className="grid gap-2">
-            <Label htmlFor="email" className="text-slate-200">Email</Label>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-200" htmlFor="email">
+              Correo Electrónico
+            </label>
             <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <Input
                 id="email"
                 type="email"
                 placeholder="tu@email.com"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                className="bg-slate-900/50 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
+                disabled={isLoading}
+                required
+                className="pl-10 bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-orange-500"
               />
             </div>
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="password" className="text-slate-200">Contraseña</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              className="bg-slate-900/50 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
+          {/* Contraseña */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-200" htmlFor="password">
+              Contraseña
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                required
+                className="pl-10 bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-orange-500"
+              />
+            </div>
+          </div>
+
+          {/* CAPTCHA - AQUÍ ESTÁ EL WIDGET */}
+          <div className="flex justify-center py-2">
+            <TurnstileWidget
+              onSuccess={(token) => {
+                console.log('✅ Captcha completado')
+                setCaptchaToken(token)
+                setError(null)
+              }}
+              onError={() => {
+                console.error('❌ Error en captcha')
+                setCaptchaToken(null)
+                setError('Error al cargar la verificación de seguridad. Recarga la página.')
+              }}
             />
           </div>
-        </CardContent>
 
-        <CardFooter className="pt-2">
-          <Button 
+          {/* Error */}
+          {error && (
+            <Alert variant="destructive" className="bg-red-500/10 border-red-500/50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-red-400">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Botón de Submit */}
+          <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-            disabled={loading}
+            disabled={isLoading || !captchaToken}
+            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-slate-700 disabled:to-slate-800 text-white font-semibold shadow-lg transition-all duration-200 disabled:cursor-not-allowed"
           >
-            {loading ? (
+            {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                <span>Iniciando sesión...</span>
+                Iniciando sesión...
               </>
             ) : (
               <>
                 <LogIn className="mr-2 h-4 w-4" />
-                <span>Iniciar Sesión</span>
+                Iniciar Sesión
               </>
             )}
           </Button>
-        </CardFooter>
-      </form>
+        </form>
+      </CardContent>
     </Card>
-  );
+  )
 }

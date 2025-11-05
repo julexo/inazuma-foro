@@ -5,11 +5,12 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Eye, Heart, Bookmark } from 'lucide-react';
+import { Eye, Heart, Bookmark, Edit3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
+import Link from 'next/link';
 
 interface ThreadListProps {
   threads: Thread[];
@@ -188,6 +189,13 @@ export function ThreadList({ threads }: ThreadListProps) {
     }
   }
 
+  const wasEdited = (thread: Thread) => {
+    if (!thread.updated_at) return false
+    const created = new Date(thread.created_at).getTime()
+    const updated = new Date(thread.updated_at).getTime()
+    return updated - created > 60000 // Más de 1 minuto de diferencia
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -203,79 +211,90 @@ export function ThreadList({ threads }: ThreadListProps) {
       ) : (
         <div className="space-y-3">
           {threads.map((thread) => (
-            <Card
-              key={thread.id}
-              onClick={() => handleThreadClick(thread.id)}
-              className="p-4 transition-all duration-200 ease-in-out cursor-pointer bg-slate-800/60 border border-slate-700 shadow-md hover:bg-slate-700/80 hover:border-sky-500 hover:shadow-lg"
-            >
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10 border-2 border-slate-600 shrink-0">
-                    <AvatarImage src={thread.users?.email || ''} alt={thread.users?.email || 'User'} />
-                    <AvatarFallback className="bg-sky-700 text-white">
-                      {thread.users?.email?.slice(0, 2).toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
+            <Link key={thread.id} href={`/threads/${thread.id}`}>
+              <Card
+                onClick={() => handleThreadClick(thread.id)}
+                className="p-4 transition-all duration-200 ease-in-out cursor-pointer bg-slate-800/60 border border-slate-700 shadow-md hover:bg-slate-700/80 hover:border-sky-500 hover:shadow-lg"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-10 w-10 border-2 border-slate-600 shrink-0">
+                      <AvatarImage src={(thread.users as { id: string; email: string; avatar_url?: string } | undefined)?.avatar_url || ''} alt={thread.users?.email || 'User'} />
+                      <AvatarFallback className="bg-sky-700 text-white">
+                        {thread.users?.email?.slice(0, 2).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 text-sm">
-                      <span className="font-semibold text-orange-400">{thread.users?.email || 'Usuario'}</span>
-                      <span className="text-slate-500">·</span>
-                      <span className="text-slate-400">{formatDate(thread.created_at)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 text-sm">
+                        <span className="font-semibold text-orange-400">{thread.users?.email || 'Usuario'}</span>
+                        <span className="text-slate-500">·</span>
+                        <span className="text-slate-400">{formatDate(thread.created_at)}</span>
+                      </div>
+
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="line-clamp-2 font-semibold text-slate-50 text-lg">{thread.title}</h3>
+                        {thread.formation_data?.name && (
+                          <Badge variant="secondary" className="shrink-0 bg-sky-900/70 text-sky-200 border-sky-700 text-xs">
+                            {thread.formation_data.name}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-slate-300 line-clamp-2 text-sm pl-[52px]">{thread.content}</p>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-700 pl-[52px]">
+                    <div className="flex items-center gap-4 text-slate-400">
+                      <div className="flex items-center gap-1 text-xs">
+                        <Eye className="h-3 w-3" />
+                        <span>0</span>
+                      </div>
                     </div>
 
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="line-clamp-2 font-semibold text-slate-50 text-lg">{thread.title}</h3>
-                      {thread.formation_data?.name && (
-                        <Badge variant="secondary" className="shrink-0 bg-sky-900/70 text-sky-200 border-sky-700 text-xs">
-                          {thread.formation_data.name}
-                        </Badge>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`h-7 gap-1.5 transition-all ${
+                          userSaved.has(thread.id)
+                            ? 'text-blue-500 hover:text-blue-400'
+                            : 'text-slate-400 hover:bg-blue-900/30 hover:text-blue-300'
+                        }`}
+                        onClick={(e) => handleToggleSave(thread.id, e)}
+                      >
+                        <Bookmark className={`h-4 w-4 ${userSaved.has(thread.id) ? 'fill-current' : ''}`} />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`h-7 gap-1.5 transition-all ${
+                          userLikes.has(thread.id)
+                            ? 'text-pink-500 hover:text-pink-400'
+                            : 'text-pink-400 hover:bg-pink-900/30 hover:text-pink-300'
+                        }`}
+                        onClick={(e) => handleToggleLike(thread.id, e)}
+                      >
+                        <Heart className={`h-4 w-4 ${userLikes.has(thread.id) ? 'fill-current' : ''}`} />
+                        <span className="text-xs">{likesCount[thread.id] || 0}</span>
+                      </Button>
                     </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-slate-400 text-xs mt-2">
+                    <span>{new Date(thread.created_at).toLocaleDateString('es-ES')}</span>
+                    {wasEdited(thread) && (
+                      <>
+                        <Edit3 className="h-3 w-3 text-blue-400" />
+                        <span className="text-blue-400">editado</span>
+                      </>
+                    )}
                   </div>
                 </div>
-
-                <p className="text-slate-300 line-clamp-2 text-sm pl-[52px]">{thread.content}</p>
-
-                <div className="flex items-center justify-between pt-2 border-t border-slate-700 pl-[52px]">
-                  <div className="flex items-center gap-4 text-slate-400">
-                    <div className="flex items-center gap-1 text-xs">
-                      <Eye className="h-3 w-3" />
-                      <span>0</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`h-7 gap-1.5 transition-all ${
-                        userSaved.has(thread.id)
-                          ? 'text-blue-500 hover:text-blue-400'
-                          : 'text-slate-400 hover:bg-blue-900/30 hover:text-blue-300'
-                      }`}
-                      onClick={(e) => handleToggleSave(thread.id, e)}
-                    >
-                      <Bookmark className={`h-4 w-4 ${userSaved.has(thread.id) ? 'fill-current' : ''}`} />
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`h-7 gap-1.5 transition-all ${
-                        userLikes.has(thread.id)
-                          ? 'text-pink-500 hover:text-pink-400'
-                          : 'text-pink-400 hover:bg-pink-900/30 hover:text-pink-300'
-                      }`}
-                      onClick={(e) => handleToggleLike(thread.id, e)}
-                    >
-                      <Heart className={`h-4 w-4 ${userLikes.has(thread.id) ? 'fill-current' : ''}`} />
-                      <span className="text-xs">{likesCount[thread.id] || 0}</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

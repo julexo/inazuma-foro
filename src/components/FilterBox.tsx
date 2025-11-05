@@ -2,13 +2,15 @@
 'use client' // Este componente es interactivo, así que es un Client Component
 
 import { useState, useEffect, useRef } from 'react'
-import { Filter, Search, TrendingUp, Clock } from 'lucide-react'
+import { Filter, Search, TrendingUp, Clock, X } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Player } from '@/data/PlayerDataBase'
 import { getAllPlayers, getPlayerAvatarUrl } from '@/data/PlayerDataBase'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { formationNames } from '@/lib/formationDatabase'
 
 interface FilterBoxProps {
   onFilterChange?: (filters: { playerName: string; formation: string; sortBy: string }) => void
@@ -24,17 +26,7 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
   const [isInputFocused, setIsInputFocused] = useState(false)
   const [sortBy, setSortBy] = useState('recent') // 'recent' o 'popular'
   const searchRef = useRef<HTMLDivElement>(null)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Ejemplo de formaciones disponibles
-  const formations = [
-    'all',
-    '4-4-2',
-    '4-3-3',
-    '5-3-2',
-    '3-5-2',
-    '4-2-3-1'
-  ]
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Efecto mejorado para manejar clics fuera
   useEffect(() => {
@@ -96,6 +88,7 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
   // Manejar Enter en el input
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault() // Prevenir submit del form
       applyFilters()
     }
   }
@@ -152,35 +145,53 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
   }, [])
 
   return (
-    <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-xl shadow-lg mb-8">
-      {/* Header con efecto gradient */}
-      <h2 className="flex items-center gap-2 text-xl font-semibold mb-6">
-        <div className="p-2 rounded-lg bg-orange-500/20">
+    <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-600/50 p-6 rounded-xl shadow-lg">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
           <Filter className="h-5 w-5 text-orange-400" />
+          <h2 className="text-lg font-semibold text-white">Filtros de Búsqueda</h2>
         </div>
-        <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-          Filtros de Búsqueda
-        </span>
-      </h2>
+        {(searchQuery || formation !== 'all' || sortBy !== 'recent') && (
+          <Button
+            onClick={() => {
+              setSearchQuery('')
+              setFormation('all')
+              setSortBy('recent')
+            }}
+            variant="ghost"
+            size="sm"
+            className="text-slate-300 hover:text-white hover:bg-slate-700/50"
+          >
+            <X className="h-4 w-4 mr-2" />
+            Limpiar
+          </Button>
+        )}
+      </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); applyFilters(); }} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Búsqueda por jugador con autocompletado mejorado */}
+      <form 
+        onSubmit={(e) => { 
+          e.preventDefault() // Prevenir recarga de página
+          applyFilters() 
+        }} 
+        className="space-y-5"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Buscar por jugador */}
           <div className="space-y-2">
-            <label htmlFor="search-player" className="block text-sm font-medium text-slate-300">
-              Buscar por jugador
-            </label>
-            <div className="relative" ref={searchRef}>
+            <Label htmlFor="playerName" className="text-sm font-medium text-slate-200">
+              Buscar por Jugador
+            </Label>
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
+                id="playerName"
                 type="text"
-                id="search-player"
+                placeholder="Ej: Mark Evans"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={handleInputFocus}
                 onKeyDown={handleKeyDown}
-                className="pl-9 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus-visible:ring-orange-500/50"
-                placeholder="Ej: Endou, Gouenji..."
+                className="pl-10 bg-slate-900/60 border-slate-600 text-white placeholder:text-slate-500 focus-visible:ring-orange-500/50 h-11"
               />
               
               {/* Lista de resultados con posición mejorada */}
@@ -216,44 +227,62 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
             </div>
           </div>
 
-          {/* Selector de formación mejorado */}
+          {/* Filtrar por formación */}
           <div className="space-y-2">
-            <label htmlFor="filter-formation" className="block text-sm font-medium text-slate-300">
-              Filtrar por alineación
-            </label>
+            <Label htmlFor="formation" className="text-sm font-medium text-slate-200">
+              Formación
+            </Label>
             <Select value={formation} onValueChange={handleFormationChange}>
-              <SelectTrigger className="w-full bg-slate-900/50 border-slate-600 text-slate-200">
-                <SelectValue placeholder="Selecciona formación" />
+              <SelectTrigger 
+                id="formation"
+                className="bg-slate-900/60 border-slate-600 text-white focus:ring-orange-500/50 h-11"
+              >
+                <SelectValue placeholder="Todas las formaciones" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                {formations.map((f) => (
+              <SelectContent className="bg-slate-800 border-slate-600 max-h-[300px]">
+                <SelectItem 
+                  value="all"
+                  className="text-white hover:bg-slate-700 focus:bg-slate-700 cursor-pointer"
+                >
+                  Todas las formaciones
+                </SelectItem>
+                {formationNames.map((name) => (
                   <SelectItem 
-                    key={f} 
-                    value={f}
-                    className="text-slate-200 focus:bg-slate-700 cursor-pointer"
+                    key={name} 
+                    value={name}
+                    className="text-white hover:bg-slate-700 focus:bg-slate-700 cursor-pointer"
                   >
-                    {f === 'all' ? 'Todas las formaciones' : f}
+                    {name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Nuevo: Ordenar por */}
+          {/* Ordenar por */}
           <div className="space-y-2">
-            <label htmlFor="sort-by" className="block text-sm font-medium text-slate-300">
+            <Label htmlFor="sortBy" className="text-sm font-medium text-slate-200">
               Ordenar por
-            </label>
+            </Label>
             <Select value={sortBy} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-full bg-slate-900/50 border-slate-600 text-slate-200">
+              <SelectTrigger 
+                id="sortBy"
+                className="bg-slate-900/60 border-slate-600 text-white focus:ring-orange-500/50 h-11"
+              >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="recent" className="text-slate-200 focus:bg-slate-700 cursor-pointer">
+              <SelectContent className="bg-slate-800 border-slate-600">
+                <SelectItem 
+                  value="recent"
+                  className="text-white hover:bg-slate-700 focus:bg-slate-700 cursor-pointer"
+                >
                   <Clock className="h-4 w-4 inline mr-2" />
                   Más recientes
                 </SelectItem>
-                <SelectItem value="popular" className="text-slate-200 focus:bg-slate-700 cursor-pointer">
+                <SelectItem 
+                  value="popular"
+                  className="text-white hover:bg-slate-700 focus:bg-slate-700 cursor-pointer"
+                >
                   <TrendingUp className="h-4 w-4 inline mr-2" />
                   Más populares
                 </SelectItem>
@@ -261,24 +290,21 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
             </Select>
           </div>
         </div>
-
-        {/* Botón de búsqueda */}
-        <Button
-          type="submit"
-          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium shadow-lg transition-all duration-300"
-        >
-          <Search className="mr-2 h-4 w-4" />
-          Buscar Hilos
-        </Button>
       </form>
 
       {/* Contador de resultados */}
       {resultsCount !== undefined && (
-        <div className="mt-4 flex justify-end">
-          <div className="flex items-center gap-2 px-3 py-1 bg-slate-900/50 rounded-lg border border-slate-700/50">
-            <span className="text-xs text-slate-400">Resultados:</span>
-            <span className="text-sm font-semibold text-orange-400">{resultsCount}</span>
-          </div>
+        <div className="mt-4 pt-4 border-t border-slate-600/50">
+          <p className="text-sm text-slate-300">
+            {resultsCount === 0 ? (
+              <span className="text-orange-400">No se encontraron resultados</span>
+            ) : (
+              <>
+                Mostrando <span className="font-semibold text-white">{resultsCount}</span>{' '}
+                {resultsCount === 1 ? 'alineación' : 'alineaciones'}
+              </>
+            )}
+          </p>
         </div>
       )}
     </div>

@@ -19,11 +19,13 @@ export interface Thread {
   title: string
   content: string
   created_at: string
+  updated_at?: string // Añadir campo opcional
   user_id: string
   formation_data?: Formation
   users?: {
     id: string
     email: string
+    avatar_url?: string | null
   }
   replies?: Reply[]
 }
@@ -38,5 +40,6 @@ export interface Reply {
   users?: {
     id: string
     email: string
+    avatar_url?: string | null
   }
 }

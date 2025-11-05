@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
-import type { Formation } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,12 +11,24 @@ import { Loader2, Send, AlertCircle, LayoutTemplate, ArrowLeft, Home } from 'luc
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formationsDatabase, formationNames } from '@/lib/formationDatabase'
 import Link from 'next/link'
+import type { Formation } from '@/types'
 
 export default function NewThreadPage() {
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [formation, setFormation] = useState<Formation>(formationsDatabase['4-4-2'])
+  
+  // Inicializar con "4-4-2 Diamond" correctamente clonado
+  const [formation, setFormation] = useState<Formation>(() => {
+    const baseFormation = formationsDatabase['4-4-2 Diamond']
+    if (!baseFormation) {
+      console.error('No se encontró la formación 4-4-2 Diamond')
+      return { name: '4-4-2 Diamond', players: [] }
+    }
+    // Clonar profundamente para evitar mutaciones
+    return JSON.parse(JSON.stringify(baseFormation)) as Formation
+  })
+  
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 

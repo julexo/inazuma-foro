@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { Thread } from '@/types'
 import type { Formation } from '@/types'
@@ -63,7 +63,7 @@ export default function SavedThreadsPage() {
       }
 
       const adaptedThreads: Thread[] = (threadsData || []).map((row: Row) => {
-        const formation = (row.formation_data as Formation) || { name: '4-4-2', players: [] }
+        const formation = (row.formation_data as Formation) || { name: '4-4-2 Diamond', players: [] }
 
         let profile: Profile = null
         if (Array.isArray(row.profiles) && row.profiles.length > 0) {
@@ -81,7 +81,8 @@ export default function SavedThreadsPage() {
           formation_data: formation,
           users: {
             id: row.user_id,
-            email: profile?.username || `Usuario #${row.user_id.slice(0, 8)}`
+            email: profile?.username || `Usuario #${row.user_id.slice(0, 8)}`,
+            avatar_url: profile?.avatar_url || null
           }
         }
       })
@@ -94,6 +95,9 @@ export default function SavedThreadsPage() {
     }
   }, [user])
 
+  // IDs de hilos actualmente listados (para filtrar eventos entrantes)
+  const currentIds = useMemo(() => new Set(threads.map(t => t.id)), [threads])
+
   useEffect(() => {
     if (!user) {
       router.push('/login')
@@ -101,6 +105,32 @@ export default function SavedThreadsPage() {
     }
     fetchSavedThreads()
   }, [user, router, fetchSavedThreads])
+
+  // Suscripción en tiempo real a cambios de threads (UPDATE/DELETE)
+  useEffect(() => {
+    if (!user) return
+    
+    type PayloadRecord = { id?: string | number }
+    
+    const channel = supabase
+      .channel('saved-threads-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'threads' },
+        (payload) => {
+          const changedId = String((payload.new as PayloadRecord)?.id || (payload.old as PayloadRecord)?.id || '')
+          if (changedId && currentIds.has(changedId)) {
+            // Si el hilo afectado está en la lista actual, refrescar
+            fetchSavedThreads()
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, currentIds, fetchSavedThreads])
 
   if (loading) {
     return (
