@@ -232,33 +232,31 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                 Alineación
               </h3>
               
-              <div className="relative w-full h-[400px] bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-lg overflow-visible shadow-lg border border-green-800">
-                {/* Contenedor interno solo para el fondo (evita cortar tooltips) */}
-                <div className="absolute inset-0 rounded-lg overflow-hidden">
-                  {/* SVG rotado 90° */}
-                  <svg
-                    className="absolute inset-0 w-full h-full opacity-25 pointer-events-none transform origin-center rotate-90"
-                    preserveAspectRatio="none"
-                  >
-                    <rect x="0%" y="0%" width="100%" height="100%" fill="none" stroke="white" strokeWidth="1.5" />
-                    <line x1="50%" y1="0%" x2="50%" y2="100%" stroke="white" strokeWidth="1.5" />
-                    <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="1.5" />
-                    <circle cx="50%" cy="50%" r="1%" fill="white" />
-                    <rect x="0%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="1.5" />
-                    <rect x="0%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="1.5" />
-                    <rect x="85%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="1.5" />
-                    <rect x="92%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="1.5" />
-                  </svg>
+              <div className="relative w-full h-[400px] bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-lg overflow-hidden shadow-lg border border-green-800">
+                
+                {/* SVG rotado 90° */}
+                <svg
+                  className="absolute inset-0 w-full h-full opacity-25 pointer-events-none transform origin-center rotate-90"
+                  preserveAspectRatio="none"
+                >
+                  <rect x="0%" y="0%" width="100%" height="100%" fill="none" stroke="white" strokeWidth="1.5" />
+                  <line x1="50%" y1="0%" x2="50%" y2="100%" stroke="white" strokeWidth="1.5" />
+                  <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="1.5" />
+                  <circle cx="50%" cy="50%" r="1%" fill="white" />
+                  <rect x="0%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="1.5" />
+                  <rect x="0%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="1.5" />
+                  <rect x="85%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="1.5" />
+                  <rect x="92%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="1.5" />
+                </svg>
 
-                  {/* Textura del césped */}
-                  <div
-                    className="absolute inset-0 opacity-10 pointer-events-none"
-                    style={{
-                      backgroundImage:
-                        'repeating-linear-gradient(90deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 25px, rgba(255,255,255,0.05) 25px, rgba(255,255,255,0.05) 50px)',
-                    }}
-                  />
-                </div>
+                {/* Textura del césped */}
+                <div
+                  className="absolute inset-0 opacity-10 pointer-events-none"
+                  style={{
+                    backgroundImage:
+                      'repeating-linear-gradient(90deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 25px, rgba(255,255,255,0.05) 25px, rgba(255,255,255,0.05) 50px)',
+                  }}
+                />
 
                 {/* Jugadores compactos */}
                 {thread.formation_data.players.map((player) => (
@@ -269,11 +267,8 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                       style={{ left: `${player.position.x}%`, top: `${player.position.y}%` }}
                     >
                       <div className="relative group">
-                        {/* Glow exterior */}
-                        <div className="absolute -inset-2 bg-gradient-to-br from-blue-400/30 via-cyan-400/30 to-blue-500/30 rounded-full blur-lg group-hover:from-blue-400/60 group-hover:via-cyan-400/60 group-hover:to-blue-500/60 transition-all duration-300 animate-pulse" />
-                        {/* Glow interior */}
                         <div className="absolute -inset-1 bg-blue-400/20 rounded-full blur group-hover:bg-blue-400/40 transition-all" />
-                        <Avatar className="h-10 w-10 border-2 border-white ring-2 ring-blue-500 shadow-lg relative group-hover:ring-cyan-400 group-hover:scale-125 transition-all duration-300">
+                        <Avatar className="h-10 w-10 border-2 border-white ring-2 ring-blue-500 shadow-lg relative">
                           <AvatarImage 
                             src={getPlayerAvatarUrl(player.playerData.avatar)} 
                             loading="lazy"
@@ -554,108 +549,43 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                             </svg>
 
                             {/* Textura de césped realista */}
-                            <div
-                              className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay"
-                              style={{
-                                backgroundImage:
-                                  'repeating-linear-gradient(90deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 35px, rgba(255,255,255,0.08) 35px, rgba(255,255,255,0.08) 70px)',
-                              }}
-                            />
-                          </div>
-
-                          {/* Jugadores con diseño premium - fuera del overflow hidden */}
-                          {reply.formation_data.players.map((player, index) => (
-                            player.playerData && (
-                              <div
-                                key={player.id}
-                                className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 hover:scale-125 z-10 hover:z-[100]"
-                                style={{ 
-                                  left: `${player.position.x}%`, 
-                                  top: `${player.position.y}%`,
-                                  animationDelay: `${index * 50}ms`
-                                }}
-                              >
-                                <div className="relative group/player animate-in fade-in zoom-in">
-                                  {/* Glow effect ultra mejorado */}
-                                  <div className="absolute -inset-3 bg-gradient-to-br from-blue-400/40 via-cyan-400/40 to-blue-500/40 rounded-full blur-xl group-hover/player:from-blue-400/70 group-hover/player:via-cyan-400/70 group-hover/player:to-blue-500/70 transition-all duration-500 animate-pulse" />
-                                  
-                                  {/* Ring decorativo */}
-                                  <div className="absolute -inset-1 bg-gradient-to-br from-blue-400/50 to-cyan-400/50 rounded-full blur group-hover/player:from-blue-400/80 group-hover/player:to-cyan-400/80 transition-all duration-300"></div>
-                                  
-                                  {/* Avatar del jugador */}
-                                  <Avatar className="h-10 w-10 border-[3px] border-white ring-[3px] ring-blue-500 shadow-2xl relative group-hover/player:ring-cyan-400 group-hover/player:scale-110 transition-all duration-300">
-                                    <AvatarImage 
-                                      src={getPlayerAvatarUrl(player.playerData.avatar)} 
-                                      loading="lazy"
-                                      className="object-cover"
-                                    />
-                                    <AvatarFallback className="bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-700 text-white font-bold text-[10px]">
-                                      {player.playerData.name.slice(0, 2)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  
-                                  {/* Tooltip ultra premium - adaptativo en todas las direcciones */}
-                                  <div className={`absolute ${player.position.y > 50 ? 'bottom-full mb-3' : 'top-full mt-3'} ${player.position.x < 20 ? 'left-0' : player.position.x > 80 ? 'right-0' : 'left-1/2 -translate-x-1/2'} opacity-0 group-hover/player:opacity-100 transition-all duration-300 pointer-events-none z-[200] scale-90 group-hover/player:scale-100`}>
-                                    <div className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700/70 backdrop-blur-xl min-w-[140px]">
-                                      {/* Barra superior decorativa */}
-                                      <div className={`absolute ${player.position.y > 50 ? 'bottom-0' : 'top-0'} left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 ${player.position.y > 50 ? 'rounded-b-xl' : 'rounded-t-xl'}`}></div>
-                                      
-                                      <div className="font-bold text-sm whitespace-nowrap mb-1">{player.playerData.name}</div>
-                                      <div className="flex items-center gap-1.5">
-                                        <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/40 text-[9px] px-1.5 py-0.5 font-bold">
-                                          {player.playerData.position}
-                                        </Badge>
-                                      </div>
-                                      
-                                      {/* Flecha decorativa mejorada - cambia según posición */}
-                                      <div className={`absolute ${player.position.x < 20 ? 'left-4' : player.position.x > 80 ? 'right-4' : 'left-1/2 -translate-x-1/2'} ${player.position.y > 50 ? '-bottom-2 rotate-[225deg]' : '-top-2 rotate-45'} w-3 h-3 bg-gradient-to-br from-slate-950 to-slate-900 border-l border-t border-slate-700/70`}></div>
-                                    </div>
+                                              <div
+                                                className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay"
+                                                style={{
+                                                  backgroundImage:
+                                                    'repeating-linear-gradient(90deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 35px, rgba(255,255,255,0.08) 35px, rgba(255,255,255,0.08) 70px)',
+                                                }}
+                                              />
+                                            </div>
+                  
+                                            {/* Jugadores en el campo */}
+                                            {reply.formation_data.players.map((player) => (
+                                              player.playerData && (
+                                                <div
+                                                  key={player.id}
+                                                  className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10"
+                                                  style={{ left: `${player.position.x}%`, top: `${player.position.y}%` }}
+                                                >
+                                                  <Avatar className="h-8 w-8 border-2 border-white shadow-lg">
+                                                    <AvatarImage src={getPlayerAvatarUrl(player.playerData.avatar)} loading="lazy" />
+                                                    <AvatarFallback className="bg-blue-600 text-white text-xs">
+                                                      {player.playerData.name.slice(0, 2)}
+                                                    </AvatarFallback>
+                                                  </Avatar>
+                                                </div>
+                                              )
+                                                                        ))}
+                                                                      </div>
+                                                                    </div>
+                                                                  </div>
+                                                                </div>
+                                                              ) : null}
+                                                            </div>
+                                                          </div>
+                                                        </Card>
+                                    ))}
                                   </div>
                                 </div>
-                              </div>
-                            )
-                          ))}
-                        </div>
-                        
-                        {/* Estadísticas premium */}
-                        <div className="mt-4 pt-4 border-t border-slate-700/50 grid grid-cols-3 gap-3">
-                          <div className="text-center p-2 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                            <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-1">Completo</p>
-                            <p className="text-base font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                              {Math.round((reply.formation_data.players.filter(p => p.playerData).length / 11) * 100)}%
-                            </p>
-                          </div>
-                          <div className="text-center p-2 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                            <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-1">Jugadores</p>
-                            <p className="text-base font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                              {reply.formation_data.players.filter(p => p.playerData).length}/11
-                            </p>
-                          </div>
-                          <div className="text-center p-2 rounded-xl bg-slate-800/50 border border-slate-700/30">
-                            <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-1">Sistema</p>
-                            <p className="text-[10px] font-bold text-orange-400">
-                              {reply.formation_data.name.split(' ')[0]}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="lg:col-span-1 hidden lg:flex items-center justify-center">
-                    <div className="text-center text-slate-500/50 p-8 rounded-2xl border-2 border-dashed border-slate-700/30">
-                      <Layout className="h-14 w-14 mx-auto mb-3 opacity-30" />
-                      <p className="text-xs font-medium">Sin alineación táctica</p>
-                      <p className="text-[10px] text-slate-600 mt-1">No se adjuntó formación</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  )
-}
-
+                              )
+                            }
+                       
