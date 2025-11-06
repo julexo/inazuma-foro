@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle, Loader2, UserPlus, User, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 
-export default function SignUpForm() {
+export default function SignUpForm({ captchaToken }: { captchaToken: string | null }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('');
@@ -36,6 +36,12 @@ export default function SignUpForm() {
       setError("Todos los campos son obligatorios.");
       setLoading(false);
       return;
+    }
+
+    if (!captchaToken) {
+      setError('Debes completar la verificación de seguridad.')
+      setLoading(false)
+      return
     }
 
     // Validar si el email ya existe en Supabase Auth
@@ -66,7 +72,8 @@ try {
           username: username, // <- Debe coincidir con ->> 'username' en el trigger
           firstName: firstName, // <- Debe coincidir con ->> 'firstName' en el trigger
           lastName: lastName    // <- Debe coincidir con ->> 'lastName' en el trigger
-        }
+        },
+        captchaToken
       }
     });
 
