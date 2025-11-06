@@ -128,8 +128,15 @@ export default function LoginForm() {
           {/* CAPTCHA - AQUÍ ESTÁ EL WIDGET */}
           <div className="flex justify-center py-2">
             <TurnstileWidget
-              onSuccess={(token) => { setCaptchaToken(token); setError(null) }}
-              onError={() => { setCaptchaToken(null); setError('Error de verificación. Recarga e inténtalo de nuevo.') }}
+              onSuccess={(token) => {
+                // guardar token para options.captchaToken del signIn
+                setCaptchaToken(token)
+                setError(null)
+              }}
+              onError={() => {
+                setCaptchaToken(null)
+                setError('Error de verificación. Recarga e inténtalo de nuevo.')
+              }}
             />
           </div>
 
