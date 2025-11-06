@@ -1,25 +1,23 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Loader2, RotateCcw } from 'lucide-react'
+
+interface TurnstileOptions {
+  sitekey: string
+  theme?: string
+  retry?: string
+  'refresh-expired'?: string
+  callback?: (token: string) => void
+  'error-callback'?: () => void
+}
 
 declare global {
   interface Window {
     turnstile?: {
-      render: (
-        container: HTMLElement,
-        options: {
-          sitekey: string
-          theme?: string
-          callback?: (token: string) => void
-          'error-callback'?: () => void
-          'expired-callback'?: () => void
-          appearance?: 'always' | 'execute' | 'interaction-only'
-        }
-      ) => string
+      render: (container: HTMLElement, options: TurnstileOptions) => string
       reset: (widgetId?: string) => void
     }
-    __cfTurnstileLoaded?: boolean
   }
 }
 
@@ -29,135 +27,148 @@ interface TurnstileWidgetProps {
 }
 
 export function TurnstileWidget({ onSuccess, onError }: TurnstileWidgetProps) {
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  const [mounted, setMounted] = useState(false)
+  const [hostname, setHostname] = useState('')
+  const [siteKey, setSiteKey] = useState<string | undefined>(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
+
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [lastError, setLastError] = useState<string | undefined>(undefined)
+
   const containerRef = useRef<HTMLDivElement>(null)
-  const renderedRef = useRef(false)
   const widgetIdRef = useRef<string | null>(null)
+  const renderedRef = useRef(false)          // evita renders duplicados (StrictMode)
+  const scriptAppendedRef = useRef(false)    // evita insertar el script más de una vez
 
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-  // Carga única del script (evitar múltiples inyecciones)
+  // Montaje + hostname + siteKey desde env (una única key para todos los entornos)
   useEffect(() => {
-    const SCRIPT_ID = 'cf-turnstile-script'
+    setMounted(true)
+    setHostname(window.location.hostname)
+    setSiteKey(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
+  }, [])
 
-    // Si ya está disponible, marcamos como cargado
-    if (window.turnstile) {
-      setIsLoaded(true)
-      return
+  // Cargar script (solo una vez)
+  useEffect(() => {
+    if (!mounted) return
+    if (window.turnstile) return
+    if (scriptAppendedRef.current) return
+
+    const id = 'cf-turnstile-script'
+    if (!document.getElementById(id)) {
+      const s = document.createElement('script')
+      s.id = id
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
+      s.async = true
+      s.defer = true
+      s.onerror = () => { setStatus('error'); setLastError('script-load-error') }
+      document.body.appendChild(s)
     }
+    scriptAppendedRef.current = true
+  }, [mounted])
 
-    // Si el script ya está en el DOM, esperar a que exponga window.turnstile
-    const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null
-    if (existing) {
-      const check = setInterval(() => {
-        if (window.turnstile) {
-          clearInterval(check)
-          setIsLoaded(true)
-        }
-      }, 100)
-      const timeout = setTimeout(() => {
-        clearInterval(check)
-        if (!window.turnstile) {
-          setErrorMessage('La verificación tardó demasiado en cargar.')
-          onError?.()
-        }
-      }, 8000)
-      return () => {
-        clearInterval(check)
-        clearTimeout(timeout)
+  // Render programático único
+  useEffect(() => {
+    if (!mounted || !siteKey || renderedRef.current === true) return
+
+    const tryRender = () => {
+      if (!window.turnstile || !containerRef.current) return false
+      try {
+        // limpiar contenedor por seguridad
+        containerRef.current.innerHTML = ''
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+          sitekey: siteKey,
+          theme: 'dark',
+          retry: 'auto',
+          'refresh-expired': 'auto',
+          callback: (token: string) => {
+            setStatus('ready')
+            setLastError(undefined)
+            onSuccess(token)
+          },
+          'error-callback': () => {
+            setStatus('error')
+            setLastError('render-error')
+            onError?.()
+          },
+        })
+        renderedRef.current = true
+        return true
+      } catch {
+        return false
       }
     }
 
-    // Inyectar script
-    const script = document.createElement('script')
-    script.id = SCRIPT_ID
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
-    script.async = true
-    script.defer = true
-    script.onload = () => {
-      window.__cfTurnstileLoaded = true
-      setIsLoaded(true)
+    // intento inmediato y pequeño reintento si aún no está disponible
+    if (!tryRender()) {
+      const t = setTimeout(tryRender, 250)
+      return () => clearTimeout(t)
     }
-    script.onerror = () => {
-      setErrorMessage('No se pudo cargar la verificación. Revisa tu conexión.')
-      onError?.()
-    }
-    document.body.appendChild(script)
+  }, [mounted, siteKey, onSuccess, onError])
 
-    // No eliminamos el script global al desmontar
-  }, [onError])
+  const retry = () => {
+    setStatus('loading')
+    setLastError(undefined)
+    try { if (widgetIdRef.current) window.turnstile?.reset(widgetIdRef.current) } catch {}
+    renderedRef.current = false
+    // reintentar un render limpio
+    if (containerRef.current) containerRef.current.innerHTML = ''
+    // el efecto de arriba volverá a intentar montar
+    setTimeout(() => setStatus('loading'), 0)
+  }
 
-// Renderizar widget (solo una vez)
-useEffect(() => {
-    if (!siteKey || !isLoaded || !containerRef.current || !window.turnstile || renderedRef.current) return
-    const containerEl = containerRef.current!
+  if (!mounted) {
+    return (
+      <div className="flex items-center gap-2 text-slate-400 text-xs justify-center">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        <span>Inicializando verificación…</span>
+      </div>
+    )
+  }
 
-    try {
-      containerEl.innerHTML = ''
-      const id = window.turnstile.render(containerEl, {
-        sitekey: siteKey,
-        theme: 'dark',
-        // appearance: 'interaction-only', // <- quitar para evitar errores en algunos navegadores
-        callback: (token: string) => {
-          setErrorMessage(null)
-          onSuccess(token)
-        },
-        'error-callback': () => {
-          setErrorMessage('Error al cargar la verificación. Reintentando...')
-          onError?.()
-          // Reintento básico tras 1s
-          setTimeout(() => {
-            try { window.turnstile?.reset(widgetIdRef.current || undefined) } catch {}
-          }, 1000)
-        },
-        'expired-callback': () => {
-          setErrorMessage('La verificación expiró. Complétala de nuevo.')
-          onError?.()
-          try { window.turnstile?.reset(widgetIdRef.current || undefined) } catch {}
-        },
-      })
-      widgetIdRef.current = id
-      renderedRef.current = true
-    } catch {
-      setErrorMessage('No se pudo inicializar la verificación.')
-      onError?.()
-    }
+  if (!siteKey) {
+    return (
+      <div className="text-red-400 text-sm p-3 bg-red-500/10 rounded-lg border border-red-500/30">
+        ⚠️ NEXT_PUBLIC_TURNSTILE_SITE_KEY no configurada
+      </div>
+    )
+  }
 
-    return () => {
-      // Reset del widget para evitar residuos en navegaciones
-      if (widgetIdRef.current) {
-        try {
-          window.turnstile?.reset(widgetIdRef.current)
-        } catch {
-          // ignore
-        }
-      }
-      if (containerEl) containerEl.innerHTML = ''
-      renderedRef.current = false
-      widgetIdRef.current = null
-    }
-  }, [isLoaded, siteKey, onSuccess, onError])
   return (
     <div className="space-y-2">
-      {!siteKey ? (
-        <div className="text-red-400 text-sm p-3 bg-red-500/10 rounded-lg border border-red-500/30 flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold">Error de configuración</p>
-            <p className="text-xs mt-1">NEXT_PUBLIC_TURNSTILE_SITE_KEY no está configurada.</p>
-          </div>
+      <div ref={containerRef} className="flex justify-center" />
+      {status === 'loading' && (
+        <div className="flex items-center gap-2 text-slate-400 text-xs justify-center">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Cargando verificación…</span>
         </div>
-      ) : (
-        <>
-          <div ref={containerRef} className="flex justify-center min-h-10" />
-          {errorMessage && (
-            <p className="text-red-400 text-xs bg-red-500/10 px-3 py-2 rounded border border-red-500/20 flex items-start gap-2">
+      )}
+      {status === 'ready' && (
+        <div className="flex items-center gap-2 text-green-400 text-xs justify-center">
+          <CheckCircle2 className="h-3 w-3" />
+          <span>Verificado</span>
+        </div>
+      )}
+      {status === 'error' && (
+        <div className="space-y-2">
+          <div className="text-red-400 text-xs bg-red-500/10 px-3 py-2 rounded border border-red-500/20">
+            <div className="flex items-start gap-2">
               <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span>{errorMessage}</span>
-            </p>
-          )}
-        </>
+              <div>
+                <p className="font-semibold mb-1">No se pudo inicializar la verificación</p>
+                <p className="text-[10px] text-slate-400">
+                  Hostname: <b>{hostname}</b>
+                </p>
+                {lastError && <p className="text-[10px] text-red-300 mt-1">Detalle: {lastError}</p>}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={retry}
+            className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded bg-slate-700/60 hover:bg-slate-700 text-white border border-slate-600"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Reintentar
+          </button>
+        </div>
       )}
     </div>
   )

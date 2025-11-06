@@ -25,7 +25,6 @@ export default function LoginForm() {
     e.preventDefault()
     setError(null)
 
-    // Validar captcha
     if (!captchaToken) {
       setError('Por favor, completa la verificación de seguridad')
       return
@@ -33,24 +32,14 @@ export default function LoginForm() {
 
     setIsLoading(true)
     try {
-      // Verificar captcha primero
-      const verifyResponse = await fetch('/api/verify-captcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: captchaToken }),
-      })
-      const verifyData = await verifyResponse.json()
-      if (!verifyData.success) {
-        setError('Verificación de seguridad fallida. Intenta de nuevo.')
-        setCaptchaToken(null)
-        setIsLoading(false)
-        return
-      }
+      // Quitar verificación manual contra /api/verify-captcha
 
       // Login con Supabase
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        // Enviar el token a Supabase (Attack Protection: Turnstile)
+        options: { captchaToken: captchaToken || undefined } as { captchaToken?: string },
       })
 
       if (signInError) {
@@ -64,7 +53,7 @@ export default function LoginForm() {
 
       router.push(redirectTo)
       router.refresh()
-    } catch (err: unknown) {
+    } catch (err) {
       // Mostrar detalles útiles si es un fallo de red/CSP
       if (err instanceof TypeError) {
         setError('No se pudo contactar con el servicio. Revisa tu conexión o configuración de CSP.')
@@ -139,16 +128,8 @@ export default function LoginForm() {
           {/* CAPTCHA - AQUÍ ESTÁ EL WIDGET */}
           <div className="flex justify-center py-2">
             <TurnstileWidget
-              onSuccess={(token) => {
-                console.log('✅ Captcha completado')
-                setCaptchaToken(token)
-                setError(null)
-              }}
-              onError={() => {
-                console.error('❌ Error en captcha')
-                setCaptchaToken(null)
-                setError('Error al cargar la verificación de seguridad. Recarga la página.')
-              }}
+              onSuccess={(token) => { setCaptchaToken(token); setError(null) }}
+              onError={() => { setCaptchaToken(null); setError('Error de verificación. Recarga e inténtalo de nuevo.') }}
             />
           </div>
 

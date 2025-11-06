@@ -232,31 +232,33 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                 Alineación
               </h3>
               
-              <div className="relative w-full h-[400px] bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-lg overflow-hidden shadow-lg border border-green-800">
-                
-                {/* SVG rotado 90° */}
-                <svg
-                  className="absolute inset-0 w-full h-full opacity-25 pointer-events-none transform origin-center rotate-90"
-                  preserveAspectRatio="none"
-                >
-                  <rect x="0%" y="0%" width="100%" height="100%" fill="none" stroke="white" strokeWidth="1.5" />
-                  <line x1="50%" y1="0%" x2="50%" y2="100%" stroke="white" strokeWidth="1.5" />
-                  <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="1.5" />
-                  <circle cx="50%" cy="50%" r="1%" fill="white" />
-                  <rect x="0%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="1.5" />
-                  <rect x="0%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="1.5" />
-                  <rect x="85%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="1.5" />
-                  <rect x="92%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="1.5" />
-                </svg>
+              <div className="relative w-full h-[400px] bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-lg overflow-visible shadow-lg border border-green-800">
+                {/* Contenedor interno solo para el fondo (evita cortar tooltips) */}
+                <div className="absolute inset-0 rounded-lg overflow-hidden">
+                  {/* SVG rotado 90° */}
+                  <svg
+                    className="absolute inset-0 w-full h-full opacity-25 pointer-events-none transform origin-center rotate-90"
+                    preserveAspectRatio="none"
+                  >
+                    <rect x="0%" y="0%" width="100%" height="100%" fill="none" stroke="white" strokeWidth="1.5" />
+                    <line x1="50%" y1="0%" x2="50%" y2="100%" stroke="white" strokeWidth="1.5" />
+                    <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="1.5" />
+                    <circle cx="50%" cy="50%" r="1%" fill="white" />
+                    <rect x="0%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="1.5" />
+                    <rect x="0%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="1.5" />
+                    <rect x="85%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="1.5" />
+                    <rect x="92%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="1.5" />
+                  </svg>
 
-                {/* Textura del césped */}
-                <div
-                  className="absolute inset-0 opacity-10 pointer-events-none"
-                  style={{
-                    backgroundImage:
-                      'repeating-linear-gradient(90deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 25px, rgba(255,255,255,0.05) 25px, rgba(255,255,255,0.05) 50px)',
-                  }}
-                />
+                  {/* Textura del césped */}
+                  <div
+                    className="absolute inset-0 opacity-10 pointer-events-none"
+                    style={{
+                      backgroundImage:
+                        'repeating-linear-gradient(90deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 25px, rgba(255,255,255,0.05) 25px, rgba(255,255,255,0.05) 50px)',
+                    }}
+                  />
+                </div>
 
                 {/* Jugadores compactos */}
                 {thread.formation_data.players.map((player) => (
@@ -267,8 +269,11 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                       style={{ left: `${player.position.x}%`, top: `${player.position.y}%` }}
                     >
                       <div className="relative group">
+                        {/* Glow exterior */}
+                        <div className="absolute -inset-2 bg-gradient-to-br from-blue-400/30 via-cyan-400/30 to-blue-500/30 rounded-full blur-lg group-hover:from-blue-400/60 group-hover:via-cyan-400/60 group-hover:to-blue-500/60 transition-all duration-300 animate-pulse" />
+                        {/* Glow interior */}
                         <div className="absolute -inset-1 bg-blue-400/20 rounded-full blur group-hover:bg-blue-400/40 transition-all" />
-                        <Avatar className="h-10 w-10 border-2 border-white ring-2 ring-blue-500 shadow-lg relative">
+                        <Avatar className="h-10 w-10 border-2 border-white ring-2 ring-blue-500 shadow-lg relative group-hover:ring-cyan-400 group-hover:scale-125 transition-all duration-300">
                           <AvatarImage 
                             src={getPlayerAvatarUrl(player.playerData.avatar)} 
                             loading="lazy"
@@ -575,7 +580,7 @@ export function ThreadDetail({ thread, onAddReply, onClose, currentUser }: Threa
                                   <div className="absolute -inset-3 bg-gradient-to-br from-blue-400/40 via-cyan-400/40 to-blue-500/40 rounded-full blur-xl group-hover/player:from-blue-400/70 group-hover/player:via-cyan-400/70 group-hover/player:to-blue-500/70 transition-all duration-500 animate-pulse" />
                                   
                                   {/* Ring decorativo */}
-                                  <div className="absolute -inset-1 bg-gradient-to-br from-blue-400/50 to-cyan-400/50 rounded-full blur group-hover/player:from-blue-400/80 group_hover/player:to-cyan-400/80 transition-all duration-300"></div>
+                                  <div className="absolute -inset-1 bg-gradient-to-br from-blue-400/50 to-cyan-400/50 rounded-full blur group-hover/player:from-blue-400/80 group-hover/player:to-cyan-400/80 transition-all duration-300"></div>
                                   
                                   {/* Avatar del jugador */}
                                   <Avatar className="h-10 w-10 border-[3px] border-white ring-[3px] ring-blue-500 shadow-2xl relative group-hover/player:ring-cyan-400 group-hover/player:scale-110 transition-all duration-300">

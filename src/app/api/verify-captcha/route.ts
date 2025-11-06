@@ -13,12 +13,14 @@ export async function POST(request: NextRequest) {
 
     const secretKey = process.env.TURNSTILE_SECRET_KEY
     if (!secretKey) {
-      console.error('TURNSTILE_SECRET_KEY no configurada')
+      console.error('❌ TURNSTILE_SECRET_KEY no configurada')
       return NextResponse.json(
-        { success: false, error: 'Configuración incorrecta' },
+        { success: false, error: 'Configuración incorrecta del servidor' },
         { status: 500 }
       )
     }
+
+    console.log('🔍 Verificando token con Cloudflare...')
 
     // Formato recomendado por Cloudflare
     const body = new URLSearchParams()
@@ -34,7 +36,7 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    const data = (await response.json()) as {
+    const data = await response.json() as {
       success: boolean
       'error-codes'?: string[]
       hostname?: string
@@ -42,19 +44,27 @@ export async function POST(request: NextRequest) {
       action?: string
     }
 
+    console.log('📋 Respuesta de Cloudflare:', {
+      success: data.success,
+      hostname: data.hostname,
+      errorCodes: data['error-codes'],
+    })
+
+    if (!data.success) {
+      console.error('❌ Verificación fallida. Error codes:', data['error-codes'])
+    }
+
     // Devolver info útil para depurar en cliente
     return NextResponse.json(
       {
         success: data.success,
         hostname: data.hostname ?? null,
-        action: data.action ?? null,
-        challenge_ts: data.challenge_ts ?? null,
         errorCodes: data['error-codes'] ?? null,
       },
       { status: data.success ? 200 : 400 }
     )
   } catch (error) {
-    console.error('Error verificando captcha:', error)
+    console.error('💥 Error en verify-captcha:', error)
     return NextResponse.json(
       { success: false, error: 'Error del servidor' },
       { status: 500 }
