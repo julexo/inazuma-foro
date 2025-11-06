@@ -4,21 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import Script from 'next/script'
 import { AlertCircle, CheckCircle2, Loader2, RotateCcw } from 'lucide-react'
 
-interface TurnstileOptions {
-  sitekey: string
-  theme?: string
-  retry?: string
-  'refresh-expired'?: string
-  callback?: (token: string) => void
-  'error-callback'?: () => void
-}
-
 declare global {
   interface Window {
     turnstile?: {
-      render: (container: HTMLElement, options: TurnstileOptions) => string
       reset: (widgetId?: string) => void
     }
+    __tsCb?: (token: string) => void
+    __tsErr?: (error?: string) => void
   }
 }
 
@@ -31,108 +23,53 @@ export function TurnstileWidget({ onSuccess, onError }: TurnstileWidgetProps) {
   const [mounted, setMounted] = useState(false)
   const [hostname, setHostname] = useState('')
   const [siteKey, setSiteKey] = useState<string | undefined>(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
-
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [lastError, setLastError] = useState<string | undefined>(undefined)
-  const [scriptReady, setScriptReady] = useState(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
-  const widgetIdRef = useRef<string | null>(null)
-  const renderedRef = useRef(false) // evita renders duplicados (StrictMode)
-  const watchdogRef = useRef<number | null>(null)
 
-  // Montaje + hostname + siteKey desde env
+  // Montaje y datos básicos
   useEffect(() => {
     setMounted(true)
     setHostname(window.location.hostname)
     setSiteKey(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
   }, [])
 
-  // Si el script ya estaba presente (navegación cliente), marcar como listo
+  // Callbacks globales para auto-render
   useEffect(() => {
-    if (mounted && window.turnstile && !scriptReady) setScriptReady(true)
-  }, [mounted, scriptReady])
-
-  // Watchdog por si el script no llega a cargar (8s)
-  useEffect(() => {
-    if (!mounted || scriptReady) return
-    watchdogRef.current = window.setTimeout(() => {
-      if (!window.turnstile) {
-        setStatus('error')
-        setLastError('script-timeout')
-        onError?.()
-      }
-    }, 8000)
-    return () => {
-      if (watchdogRef.current) window.clearTimeout(watchdogRef.current)
+    if (!mounted) return
+    window.__tsCb = (token: string) => {
+      setStatus('ready')
+      setLastError(undefined)
+      onSuccess(token)
     }
-  }, [mounted, scriptReady, onError])
-
-  // Render programático único
-  useEffect(() => {
-    if (!mounted || !siteKey || !scriptReady || renderedRef.current) return
-    if (!window.turnstile || !containerRef.current) return
-
-    try {
-      containerRef.current.innerHTML = ''
-      widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: siteKey,
-        theme: 'dark',
-        retry: 'auto',
-        'refresh-expired': 'auto',
-        callback: (token: string) => {
-          setStatus('ready')
-          setLastError(undefined)
-          onSuccess(token)
-        },
-        'error-callback': () => {
-          setStatus('error')
-          setLastError('render-error')
-          onError?.()
-        },
-      })
-      renderedRef.current = true
-      setStatus('loading') // hasta que llegue el callback se muestra "cargando"
-    } catch {
+    window.__tsErr = (error?: string) => {
       setStatus('error')
-      setLastError('render-exception')
+      setLastError(error || 'render-error')
       onError?.()
     }
-  }, [mounted, siteKey, scriptReady, onSuccess, onError])
+    return () => {
+      delete window.__tsCb
+      delete window.__tsErr
+    }
+  }, [mounted, onSuccess, onError])
 
+  // Retry: reconstruir el div auto-render
   const retry = () => {
     setStatus('loading')
     setLastError(undefined)
-    try { if (widgetIdRef.current) window.turnstile?.reset(widgetIdRef.current) } catch {}
-    renderedRef.current = false
-    if (containerRef.current) containerRef.current.innerHTML = ''
-    // reintento de render si el script ya está listo
-    if (window.turnstile) {
-      try {
-        widgetIdRef.current = window.turnstile.render(containerRef.current as HTMLDivElement, {
-          sitekey: siteKey as string,
-          theme: 'dark',
-          retry: 'auto',
-          'refresh-expired': 'auto',
-          callback: (token: string) => {
-            setStatus('ready')
-            setLastError(undefined)
-            onSuccess(token)
-          },
-          'error-callback': () => {
-            setStatus('error')
-            setLastError('render-error')
-            onError?.()
-          },
-        })
-        renderedRef.current = true
-      } catch {
-        setStatus('error')
-        setLastError('render-exception')
-      }
-    } else {
-      // si el script no estaba listo, esperar a onLoad
-      setScriptReady(false)
+    try { window.turnstile?.reset() } catch {}
+    if (containerRef.current) {
+      containerRef.current.innerHTML = ''
+      const div = document.createElement('div')
+      div.className = 'cf-turnstile'
+      div.setAttribute('data-sitekey', siteKey || '')
+      div.setAttribute('data-theme', 'dark')
+      div.setAttribute('data-callback', '__tsCb')
+      div.setAttribute('data-error-callback', '__tsErr')
+      div.setAttribute('data-retry', 'auto')
+      div.setAttribute('data-refresh-expired', 'auto')
+      containerRef.current.appendChild(div)
     }
   }
 
@@ -155,20 +92,32 @@ export function TurnstileWidget({ onSuccess, onError }: TurnstileWidgetProps) {
 
   return (
     <div className="space-y-2">
-      {/* Carga del script con next/script (fiable en Vercel) */}
+      {/* Script de Turnstile (fiable en Vercel) */}
       <Script
         id="cf-turnstile-script"
         src="https://challenges.cloudflare.com/turnstile/v0/api.js"
         strategy="afterInteractive"
-        onLoad={() => setScriptReady(true)}
         onError={() => {
           setStatus('error')
           setLastError('script-load-error')
           onError?.()
         }}
       />
-      <div ref={containerRef} className="flex justify-center" />
+      {/* Contenedor auto-render (sin render programático) */}
+      <div ref={containerRef} className="flex justify-center">
+        {/* Si el script aún no está listo, dejamos el div preparado */}
+        <div
+          className="cf-turnstile"
+          data-sitekey={siteKey}
+          data-theme="dark"
+          data-callback="__tsCb"
+          data-error-callback="__tsErr"
+          data-retry="auto"
+          data-refresh-expired="auto"
+        />
+      </div>
 
+      {/* Estados UI */}
       {status === 'loading' && (
         <div className="flex items-center gap-2 text-slate-400 text-xs justify-center">
           <Loader2 className="h-3 w-3 animate-spin" />
@@ -189,7 +138,7 @@ export function TurnstileWidget({ onSuccess, onError }: TurnstileWidgetProps) {
               <div>
                 <p className="font-semibold mb-1">No se pudo cargar Cloudflare Turnstile</p>
                 <p className="text-[10px] text-slate-400">
-                  Hostname: <b>{hostname}</b> • Error: <b>{lastError}</b>
+                  Hostname: <b>{hostname}</b> • SiteKey: <b>{siteKey.slice(0, 8)}…</b> • Error: <b>{lastError}</b>
                 </p>
               </div>
             </div>
