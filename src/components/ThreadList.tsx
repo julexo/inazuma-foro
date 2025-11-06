@@ -200,7 +200,7 @@ export function ThreadList({ threads }: ThreadListProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white mb-4">
-          Hilos Recientes
+    
         </h2>
       </div>
 

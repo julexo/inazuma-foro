@@ -138,6 +138,25 @@ export default function HomePage() {
               />
             </div>
 
+            {/* Header visual premium para la lista de hilos */}
+            <div className="flex items-center gap-3 mb-6 mt-2 px-2">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/30 via-blue-500/30 to-amber-600/30 shadow-lg animate-pulse">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" fill="url(#grad)" />
+                  <path d="M8 12h8M8 16h5" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                  <defs>
+                    <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5">
+                      <stop offset="0%" stopColor="#f59e42" />
+                      <stop offset="100%" stopColor="#2563eb" />
+                    </radialGradient>
+                  </defs>
+                </svg>
+              </div>
+              <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-blue-400 to-white drop-shadow-lg tracking-tight animate-in fade-in slide-in-up">
+                Hilos
+              </h2>
+            </div>
+
             {/* Lista de hilos */}
             <div className="relative">
               {/* Efecto de brillo superior */}
