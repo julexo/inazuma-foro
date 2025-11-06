@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Script from 'next/script'
 import { AlertCircle, CheckCircle2, Loader2, RotateCcw } from 'lucide-react'
 
 interface TurnstileOptions {
@@ -33,49 +34,83 @@ export function TurnstileWidget({ onSuccess, onError }: TurnstileWidgetProps) {
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [lastError, setLastError] = useState<string | undefined>(undefined)
+  const [scriptReady, setScriptReady] = useState(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string | null>(null)
-  const renderedRef = useRef(false)          // evita renders duplicados (StrictMode)
-  const scriptAppendedRef = useRef(false)    // evita insertar el script más de una vez
+  const renderedRef = useRef(false) // evita renders duplicados (StrictMode)
+  const watchdogRef = useRef<number | null>(null)
 
-  // Montaje + hostname + siteKey desde env (una única key para todos los entornos)
+  // Montaje + hostname + siteKey desde env
   useEffect(() => {
     setMounted(true)
     setHostname(window.location.hostname)
     setSiteKey(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
   }, [])
 
-  // Cargar script (solo una vez)
+  // Si el script ya estaba presente (navegación cliente), marcar como listo
   useEffect(() => {
-    if (!mounted) return
-    if (window.turnstile) return
-    if (scriptAppendedRef.current) return
+    if (mounted && window.turnstile && !scriptReady) setScriptReady(true)
+  }, [mounted, scriptReady])
 
-    const id = 'cf-turnstile-script'
-    if (!document.getElementById(id)) {
-      const s = document.createElement('script')
-      s.id = id
-      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
-      s.async = true
-      s.defer = true
-      s.onerror = () => { setStatus('error'); setLastError('script-load-error') }
-      document.body.appendChild(s)
+  // Watchdog por si el script no llega a cargar (8s)
+  useEffect(() => {
+    if (!mounted || scriptReady) return
+    watchdogRef.current = window.setTimeout(() => {
+      if (!window.turnstile) {
+        setStatus('error')
+        setLastError('script-timeout')
+        onError?.()
+      }
+    }, 8000)
+    return () => {
+      if (watchdogRef.current) window.clearTimeout(watchdogRef.current)
     }
-    scriptAppendedRef.current = true
-  }, [mounted])
+  }, [mounted, scriptReady, onError])
 
   // Render programático único
   useEffect(() => {
-    if (!mounted || !siteKey || renderedRef.current === true) return
+    if (!mounted || !siteKey || !scriptReady || renderedRef.current) return
+    if (!window.turnstile || !containerRef.current) return
 
-    const tryRender = () => {
-      if (!window.turnstile || !containerRef.current) return false
+    try {
+      containerRef.current.innerHTML = ''
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: siteKey,
+        theme: 'dark',
+        retry: 'auto',
+        'refresh-expired': 'auto',
+        callback: (token: string) => {
+          setStatus('ready')
+          setLastError(undefined)
+          onSuccess(token)
+        },
+        'error-callback': () => {
+          setStatus('error')
+          setLastError('render-error')
+          onError?.()
+        },
+      })
+      renderedRef.current = true
+      setStatus('loading') // hasta que llegue el callback se muestra "cargando"
+    } catch {
+      setStatus('error')
+      setLastError('render-exception')
+      onError?.()
+    }
+  }, [mounted, siteKey, scriptReady, onSuccess, onError])
+
+  const retry = () => {
+    setStatus('loading')
+    setLastError(undefined)
+    try { if (widgetIdRef.current) window.turnstile?.reset(widgetIdRef.current) } catch {}
+    renderedRef.current = false
+    if (containerRef.current) containerRef.current.innerHTML = ''
+    // reintento de render si el script ya está listo
+    if (window.turnstile) {
       try {
-        // limpiar contenedor por seguridad
-        containerRef.current.innerHTML = ''
-        widgetIdRef.current = window.turnstile.render(containerRef.current, {
-          sitekey: siteKey,
+        widgetIdRef.current = window.turnstile.render(containerRef.current as HTMLDivElement, {
+          sitekey: siteKey as string,
           theme: 'dark',
           retry: 'auto',
           'refresh-expired': 'auto',
@@ -91,28 +126,14 @@ export function TurnstileWidget({ onSuccess, onError }: TurnstileWidgetProps) {
           },
         })
         renderedRef.current = true
-        return true
       } catch {
-        return false
+        setStatus('error')
+        setLastError('render-exception')
       }
+    } else {
+      // si el script no estaba listo, esperar a onLoad
+      setScriptReady(false)
     }
-
-    // intento inmediato y pequeño reintento si aún no está disponible
-    if (!tryRender()) {
-      const t = setTimeout(tryRender, 250)
-      return () => clearTimeout(t)
-    }
-  }, [mounted, siteKey, onSuccess, onError])
-
-  const retry = () => {
-    setStatus('loading')
-    setLastError(undefined)
-    try { if (widgetIdRef.current) window.turnstile?.reset(widgetIdRef.current) } catch {}
-    renderedRef.current = false
-    // reintentar un render limpio
-    if (containerRef.current) containerRef.current.innerHTML = ''
-    // el efecto de arriba volverá a intentar montar
-    setTimeout(() => setStatus('loading'), 0)
   }
 
   if (!mounted) {
@@ -134,7 +155,20 @@ export function TurnstileWidget({ onSuccess, onError }: TurnstileWidgetProps) {
 
   return (
     <div className="space-y-2">
+      {/* Carga del script con next/script (fiable en Vercel) */}
+      <Script
+        id="cf-turnstile-script"
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        strategy="afterInteractive"
+        onLoad={() => setScriptReady(true)}
+        onError={() => {
+          setStatus('error')
+          setLastError('script-load-error')
+          onError?.()
+        }}
+      />
       <div ref={containerRef} className="flex justify-center" />
+
       {status === 'loading' && (
         <div className="flex items-center gap-2 text-slate-400 text-xs justify-center">
           <Loader2 className="h-3 w-3 animate-spin" />
@@ -153,11 +187,10 @@ export function TurnstileWidget({ onSuccess, onError }: TurnstileWidgetProps) {
             <div className="flex items-start gap-2">
               <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold mb-1">No se pudo inicializar la verificación</p>
+                <p className="font-semibold mb-1">No se pudo cargar Cloudflare Turnstile</p>
                 <p className="text-[10px] text-slate-400">
-                  Hostname: <b>{hostname}</b>
+                  Hostname: <b>{hostname}</b> • Error: <b>{lastError}</b>
                 </p>
-                {lastError && <p className="text-[10px] text-red-300 mt-1">Detalle: {lastError}</p>}
               </div>
             </div>
           </div>
