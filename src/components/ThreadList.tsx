@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Eye, Heart, Bookmark, Edit3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link';
@@ -49,19 +49,20 @@ export function ThreadList({ threads }: ThreadListProps) {
     }
   }, [user])
 
-  useEffect(() => {
-    // Inicializar contadores de likes con valor por defecto 0
-    const initialCounts: Record<string, number> = {}
-    threads.forEach(thread => {
-      initialCounts[thread.id] = 0 // Inicializar con 0, luego cargar desde BD
-    })
-    setLikesCount(initialCounts)
+  // Memoiza los contadores de likes para evitar recalcular en cada render
+  const initialCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    threads.forEach(thread => { counts[thread.id] = 0 })
+    return counts
+  }, [threads])
 
+  useEffect(() => {
+    setLikesCount(initialCounts)
     if (user) {
       fetchUserLikes()
       fetchUserSaved()
     }
-  }, [user, threads, fetchUserLikes, fetchUserSaved])
+  }, [user, threads, fetchUserLikes, fetchUserSaved, initialCounts])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

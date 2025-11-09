@@ -1,65 +1,56 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { DragDropFormationBuilder } from '@/components/builder/DragDropFormationBuilder'
-import { Loader2, Send, AlertCircle, LayoutTemplate, ArrowLeft, Home } from 'lucide-react' 
+import { Loader2, Send, AlertCircle, LayoutTemplate, ArrowLeft, Home } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formationsDatabase, formationNames } from '@/lib/formationDatabase'
 import Link from 'next/link'
 import type { Formation } from '@/types'
 
 export default function NewThreadPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  
-  // Inicializar con "4-4-2 Diamond" correctamente clonado
-  const [formation, setFormation] = useState<Formation>(() => {
-    const baseFormation = formationsDatabase['4-4-2 Diamond']
-    if (!baseFormation) {
-      console.error('No se encontró la formación 4-4-2 Diamond')
-      return { name: '4-4-2 Diamond', players: [] }
-    }
-    // Clonar profundamente para evitar mutaciones
-    return JSON.parse(JSON.stringify(baseFormation)) as Formation
-  })
-  
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
-  const handleFormationChange = (formationName: string) => {
+  // Clona la formación base solo una vez
+  const defaultFormation = useMemo(() => {
+    const base = formationsDatabase['4-4-2 Diamond']
+    return base ? JSON.parse(JSON.stringify(base)) as Formation : { name: '4-4-2 Diamond', players: [] }
+  }, [])
+  const [formation, setFormation] = useState<Formation>(defaultFormation)
+
+  const handleFormationChange = useCallback((formationName: string) => {
     const newFormationTemplate = formationsDatabase[formationName]
-    if (newFormationTemplate) {
-      setFormation(newFormationTemplate)
-    }
-  }
+    if (newFormationTemplate) setFormation(JSON.parse(JSON.stringify(newFormationTemplate)))
+  }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
     const assignedPlayers = formation.players.filter(p => p.playerData).length
-    
-    if (title.trim() === '' || content.trim() === '') {
+
+    if (!title.trim() || !content.trim()) {
       setError('El título y el contenido no pueden estar vacíos.')
       setLoading(false)
       return
     }
-    
     if (assignedPlayers < 11) {
       setError('¡Debes asignar los 11 jugadores a la alineación!')
       setLoading(false)
       return
     }
-    
+
     const { data: { user } } = await supabase.auth.getUser()
-    
     if (!user) {
       setError('Debes iniciar sesión para crear un hilo.')
       setLoading(false)
@@ -70,9 +61,9 @@ export default function NewThreadPage() {
     const { error: insertError } = await supabase
       .from('threads')
       .insert({
-        title: title,
+        title,
         user_id: user.id,
-        content: content,
+        content,
         formation_data: formation
       })
 
@@ -83,7 +74,7 @@ export default function NewThreadPage() {
       router.push('/')
       router.refresh()
     }
-  }
+  }, [title, content, formation, router])
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-orange-800">
@@ -91,8 +82,8 @@ export default function NewThreadPage() {
         {/* Botones de navegación */}
         <div className="mb-6 flex items-center gap-4">
           <Link href="/">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-slate-700/50 hover:text-white backdrop-blur-sm"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -100,8 +91,8 @@ export default function NewThreadPage() {
             </Button>
           </Link>
           <Link href="/">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-slate-700/50 hover:text-white backdrop-blur-sm"
             >
               <Home className="mr-2 h-4 w-4" />
@@ -128,7 +119,7 @@ export default function NewThreadPage() {
             </p>
           </div>
         </header>
-      
+
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Alerta de Error */}
           {error && (
@@ -144,25 +135,26 @@ export default function NewThreadPage() {
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 shadow-lg p-6 space-y-6">
             <div className="space-y-2">
               <Label htmlFor="title" className="text-lg text-slate-200">Título de tu Hilo</Label>
-              <Input 
-                id="title" 
-                value={title} 
-                onChange={(e) => setTitle(e.target.value)} 
-                placeholder="Ej: La mejor formación 4-3-3 ofensiva" 
-                className="text-lg bg-slate-900/50 border-slate-600 text-white focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50 transition-all duration-300" 
+              <Input
+                id="title"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Ej: La mejor formación 4-3-3 ofensiva"
+                className="text-lg bg-slate-900/50 border-slate-600 text-white focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50 transition-all duration-300"
                 disabled={loading}
+                autoComplete="off"
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="content" className="text-lg text-slate-200">Descripción y Tips</Label>
-              <textarea 
-                id="content" 
-                value={content} 
-                onChange={(e) => setContent(e.target.value)} 
-                placeholder="Explica por qué esta alineación es buena, sus puntos fuertes, débiles, y cómo jugarla..." 
-                className="w-full min-h-[150px] p-4 rounded-lg bg-slate-900/50 border border-slate-600 text-white focus:ring-orange-500/50 focus:border-orange-500/50 transition-all duration-300 resize-none" 
+              <textarea
+                id="content"
+                value={content}
+                onChange={e => setContent(e.target.value)}
+                placeholder="Explica por qué esta alineación es buena, sus puntos fuertes, débiles, y cómo jugarla..."
+                className="w-full min-h-[150px] p-4 rounded-lg bg-slate-900/50 border border-slate-600 text-white focus:ring-orange-500/50 focus:border-orange-500/50 transition-all duration-300 resize-none"
                 disabled={loading}
+                autoComplete="off"
               />
             </div>
           </div>
@@ -184,12 +176,11 @@ export default function NewThreadPage() {
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-4">
               <Label className="text-lg text-slate-200">Diseña tu Alineación</Label>
               <div className="relative bg-slate-900/30 rounded-xl p-4 ring-1 ring-slate-700/50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)] overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/50 via-transparent to-slate-900/50 pointer-events-none" />
-                <DragDropFormationBuilder 
+                <DragDropFormationBuilder
                   formation={formation}
                   onFormationChange={setFormation}
                 />
@@ -202,7 +193,7 @@ export default function NewThreadPage() {
           <Button
             type="submit"
             size="lg"
-            className="w-full text-lg font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl py-6"        
+            className="w-full text-lg font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl py-6"
             disabled={loading}
           >
             {loading ? (

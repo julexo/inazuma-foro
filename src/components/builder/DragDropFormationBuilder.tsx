@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Trash2, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
@@ -33,7 +33,6 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
     return JSON.parse(JSON.stringify(fallback)) as Formation
   }, [formation])
 
-  // Obtener IDs de jugadores ya usados
   const usedPlayerIds = useMemo(() => {
     return new Set(
       (safeFormation.players || [])
@@ -42,37 +41,35 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
     )
   }, [safeFormation])
 
-  // Validación de posición
-  const validatePosition = (playerData: Player, position: number): boolean => {
+  const validatePosition = useCallback((playerData: Player, position: number): boolean => {
     if (position === 1 && playerData.position !== 'Portero') {
       setError('Solo puedes colocar porteros en la posición 1');
       return false;
     }
     setError(null);
     return true;
-  };
+  }, [])
 
-  // Funciones de manejo
-  const handleDragStart = (player: Player) => {
+  const handleDragStart = useCallback((player: Player) => {
     try {
       setDraggedPlayer(player);
       setError(null);
     } catch (error) {
       console.error('Error al iniciar arrastre:', error);
     }
-  };
+  }, [])
 
-  const handleDragOver = (e: React.DragEvent, slotId: number) => {
+  const handleDragOver = useCallback((e: React.DragEvent, slotId: number) => {
     e.preventDefault();
     setHoveredSlot(slotId);
-  };
+  }, [])
 
-  const handleDragLeave = () => {
+  const handleDragLeave = useCallback(() => {
     setHoveredSlot(null);
-  };
+  }, [])
 
   // No sobrescribir el nombre del slot al asignar jugador (conserva "Portero/Defensa/Mediocampo/Delantero")
-  const handleDrop = (e: React.DragEvent, slotId: number) => {
+  const handleDrop = useCallback((e: React.DragEvent, slotId: number) => {
     try {
       e.preventDefault();
       if (!draggedPlayer) return;
@@ -91,17 +88,17 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
       console.error('Error al colocar jugador:', error);
       setError('Error al colocar el jugador');
     }
-  };
+  }, [draggedPlayer, onFormationChange, safeFormation, validatePosition])
 
   // Al quitar jugador, mantener el nombre del slot (no reasignar)
-  const handleRemovePlayer = (slotId: number) => {
+  const handleRemovePlayer = useCallback((slotId: number) => {
     const updatedPlayers = (safeFormation.players || []).map(player =>
       player.id === slotId
         ? { ...player, playerData: undefined } // ← no cambiar "name"
         : player
     );
     onFormationChange({ ...safeFormation, players: updatedPlayers });
-  };
+  }, [onFormationChange, safeFormation])
 
   // Estilos del slot (sin cambios funcionales)
   const getSlotStyles = (isHovered: boolean, hasPlayer: boolean) => `

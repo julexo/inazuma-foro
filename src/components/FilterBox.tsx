@@ -1,7 +1,7 @@
 // src/components/FilterBox.tsx
 'use client' // Este componente es interactivo, así que es un Client Component
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Filter, Search, TrendingUp, Calendar, Sparkles, ArrowUpDown, X } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -72,7 +72,7 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
   }, [searchQuery, isInputFocused, players])
 
   // Función para aplicar filtros
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     if (onFilterChange) {
       onFilterChange({
         playerName: searchQuery,
@@ -82,18 +82,18 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
     }
     setShowResults(false)
     setIsInputFocused(false)
-  }
+  }, [onFilterChange, searchQuery, formation, sortBy])
 
   // Manejar Enter en el input
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      e.preventDefault() // Prevenir submit del form
+      e.preventDefault()
       applyFilters()
     }
-  }
+  }, [applyFilters])
 
   // Función para manejar cambios en la formación
-  const handleFormationChange = (value: string) => {
+  const handleFormationChange = useCallback((value: string) => {
     setFormation(value)
     if (onFilterChange) {
       onFilterChange({
@@ -102,10 +102,10 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
         sortBy: sortBy
       })
     }
-  }
+  }, [onFilterChange, searchQuery, sortBy])
 
   // Función para manejar cambios en el orden
-  const handleSortChange = (value: string) => {
+  const handleSortChange = useCallback((value: string) => {
     setSortBy(value)
     if (onFilterChange) {
       onFilterChange({
@@ -114,18 +114,18 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
         sortBy: value
       })
     }
-  }
+  }, [onFilterChange, searchQuery, formation])
 
   // Manejadores mejorados
-  const handleInputFocus = () => {
+  const handleInputFocus = useCallback(() => {
     setIsInputFocused(true)
     if (searchQuery.length >= 2) {
       setShowResults(true)
     }
-  }
+  }, [searchQuery])
 
   // Manejar selección de jugador
-  const handlePlayerSelect = (player: Player) => {
+  const handlePlayerSelect = useCallback((player: Player) => {
     setSearchQuery(player.name)
     setShowResults(false)
     setIsInputFocused(false)
@@ -136,9 +136,9 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
         sortBy: sortBy
       })
     }
-  }
+  }, [onFilterChange, formation, sortBy])
 
-  const handleChange = (newPlayerName?: string, newFormation?: string, newSortBy?: string) => {
+  const handleChange = useCallback((newPlayerName?: string, newFormation?: string, newSortBy?: string) => {
     const pn = newPlayerName ?? searchQuery
     const fm = newFormation ?? formation
     const sb = newSortBy ?? sortBy
@@ -150,7 +150,7 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
     if (onFilterChange) {
       onFilterChange({ playerName: pn, formation: fm, sortBy: sb })
     }
-  }
+  }, [onFilterChange, searchQuery, formation, sortBy])
 
   useEffect(() => {
     // Carga inicial de jugadores para autocompletado

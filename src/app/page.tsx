@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { Thread, Formation } from '@/types'
 import Header from "@/components/Header"
@@ -14,11 +14,7 @@ export default function HomePage() {
   const [filteredThreads, setFilteredThreads] = useState<Thread[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchThreads()
-  }, [])
-
-  async function fetchThreads() {
+  const fetchThreads = useCallback(async () => {
     try {
       // Obtener threads con perfiles (username, avatar) si existen
       const { data: threadsData, error: threadsError } = await supabase
@@ -89,9 +85,13 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const handleFilterChange = (filters: { playerName: string; formation: string; sortBy: string }) => {
+  useEffect(() => {
+    fetchThreads()
+  }, [fetchThreads])
+
+  const handleFilterChange = useCallback((filters: { playerName: string; formation: string; sortBy: string }) => {
     let filtered = [...threads]
 
     // Filtrar por nombre de jugador (en formation_data)
@@ -117,7 +117,7 @@ export default function HomePage() {
     })
 
     setFilteredThreads(filtered)
-  }
+  }, [threads])
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-orange-800">
