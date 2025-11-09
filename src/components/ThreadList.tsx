@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Eye, Heart, Bookmark, Edit3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect,  useMemo } from 'react'
+import { useState, useEffect, useMemo, useTransition } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link';
@@ -23,22 +23,23 @@ export function ThreadList({ threads }: ThreadListProps) {
   const [userSaved, setUserSaved] = useState<Set<string>>(new Set())
   const [likesCount, setLikesCount] = useState<Record<string, number>>({})
 
-  // ❌ Eliminados: fetchUserLikes y fetchUserSaved
+  // ✅ INP: Inicializa useTransition. 
+  // Usamos 'startTransition' para marcar actualizaciones no urgentes.
+  const [isPending, startTransition] = useTransition();
 
-  // Memoiza los contadores de likes para evitar recalcular en cada render
+  // Memoiza los contadores de likes (sin cambios)
   const initialCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     threads.forEach(thread => { counts[thread.id] = 0 })
     return counts
   }, [threads])
 
-  // ✅ Modificado: Carga de datos del usuario en paralelo
+  // Carga de datos en paralelo (sin cambios)
   useEffect(() => {
     setLikesCount(initialCounts)
     if (user) {
       const fetchData = async () => {
         try {
-          // Ejecuta ambas peticiones en paralelo
           const [likesRes, savedRes] = await Promise.all([
             supabase
               .from('thread_likes')
@@ -62,9 +63,10 @@ export function ThreadList({ threads }: ThreadListProps) {
       }
       fetchData()
     }
-  }, [user, threads, initialCounts]) // ✅ Dependencias actualizadas
+  }, [user, threads, initialCounts])
 
   const formatDate = (dateString: string) => {
+    // ... (sin cambios)
     const date = new Date(dateString);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -82,10 +84,8 @@ export function ThreadList({ threads }: ThreadListProps) {
     router.push(`/threads/${threadId}`)
   };
 
-  // ... (handleToggleLike se mantiene igual) ...
   const handleToggleLike = async (threadId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-
     if (!user) {
       router.push('/login')
       return
@@ -94,45 +94,9 @@ export function ThreadList({ threads }: ThreadListProps) {
     const isLiked = userLikes.has(threadId)
 
     if (isLiked) {
-      setUserLikes(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(threadId)
-        return newSet
-      })
-      
-      setLikesCount(prev => ({
-        ...prev,
-        [threadId]: Math.max(0, (prev[threadId] || 0) - 1)
-      }))
-
-      const { error } = await supabase
-        .from('thread_likes')
-        .delete()
-        .eq('thread_id', threadId)
-        .eq('user_id', user.id)
-
-      if (error) {
-        console.error('Error al quitar like:', error)
-        setUserLikes(prev => new Set(prev).add(threadId))
-        setLikesCount(prev => ({
-          ...prev,
-          [threadId]: (prev[threadId] || 0) + 1
-        }))
-      }
-    } else {
-      setUserLikes(prev => new Set(prev).add(threadId))
-      
-      setLikesCount(prev => ({
-        ...prev,
-        [threadId]: (prev[threadId] || 0) + 1
-      }))
-
-      const { error } = await supabase
-        .from('thread_likes')
-        .insert({ thread_id: threadId, user_id: user.id })
-
-      if (error) {
-        console.error('Error al añadir like:', error)
+      // ✅ INP: Envuelve las actualizaciones de estado en 'startTransition'
+      // Esto permite que la UI responda al clic *antes* de re-renderizar.
+      startTransition(() => {
         setUserLikes(prev => {
           const newSet = new Set(prev)
           newSet.delete(threadId)
@@ -142,14 +106,60 @@ export function ThreadList({ threads }: ThreadListProps) {
           ...prev,
           [threadId]: Math.max(0, (prev[threadId] || 0) - 1)
         }))
+      })
+
+      // El 'await' (lógica de BBDD) va *fuera* de la transición
+      const { error } = await supabase
+        .from('thread_likes')
+        .delete()
+        .eq('thread_id', threadId)
+        .eq('user_id', user.id)
+
+      if (error) {
+        console.error('Error al quitar like:', error)
+        // Rollback (también en transición para ser consistentes)
+        startTransition(() => {
+          setUserLikes(prev => new Set(prev).add(threadId))
+          setLikesCount(prev => ({
+            ...prev,
+            [threadId]: (prev[threadId] || 0) + 1
+          }))
+        })
+      }
+    } else {
+      // ✅ INP: Envuelve las actualizaciones de estado en 'startTransition'
+      startTransition(() => {
+        setUserLikes(prev => new Set(prev).add(threadId))
+        setLikesCount(prev => ({
+          ...prev,
+          [threadId]: (prev[threadId] || 0) + 1
+        }))
+      })
+
+      const { error } = await supabase
+        .from('thread_likes')
+        .insert({ thread_id: threadId, user_id: user.id })
+
+      if (error) {
+        console.error('Error al añadir like:', error)
+        // Rollback
+        startTransition(() => {
+          setUserLikes(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(threadId)
+            return newSet
+          })
+          setLikesCount(prev => ({
+            ...prev,
+            [threadId]: Math.max(0, (prev[threadId] || 0) - 1)
+          }))
+        })
       }
     }
   }
 
-  // ... (handleToggleSave se mantiene igual) ...
   const handleToggleSave = async (threadId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-
     if (!user) {
       router.push('/login')
       return
@@ -158,10 +168,13 @@ export function ThreadList({ threads }: ThreadListProps) {
     const isSaved = userSaved.has(threadId)
 
     if (isSaved) {
-      setUserSaved(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(threadId)
-        return newSet
+      // ✅ INP: Envuelve la actualización de estado en 'startTransition'
+      startTransition(() => {
+        setUserSaved(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(threadId)
+          return newSet
+        })
       })
 
       const { error } = await supabase
@@ -172,10 +185,15 @@ export function ThreadList({ threads }: ThreadListProps) {
 
       if (error) {
         console.error('Error al quitar guardado:', error)
-        setUserSaved(prev => new Set(prev).add(threadId))
+        startTransition(() => {
+          setUserSaved(prev => new Set(prev).add(threadId))
+        })
       }
     } else {
-      setUserSaved(prev => new Set(prev).add(threadId))
+      // ✅ INP: Envuelve la actualización de estado en 'startTransition'
+      startTransition(() => {
+        setUserSaved(prev => new Set(prev).add(threadId))
+      })
 
       const { error } = await supabase
         .from('saved_threads')
@@ -183,16 +201,19 @@ export function ThreadList({ threads }: ThreadListProps) {
 
       if (error) {
         console.error('Error al guardar hilo:', error)
-        setUserSaved(prev => {
-          const newSet = new Set(prev)
-          newSet.delete(threadId)
-          return newSet
+        startTransition(() => {
+          setUserSaved(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(threadId)
+            return newSet
+          })
         })
       }
     }
   }
 
   const wasEdited = (thread: Thread) => {
+    // ... (sin cambios)
     if (!thread.updated_at) return false
     const created = new Date(thread.created_at).getTime()
     const updated = new Date(thread.updated_at).getTime()
@@ -219,7 +240,6 @@ export function ThreadList({ threads }: ThreadListProps) {
                 onClick={() => handleThreadClick(thread.id)}
                 className="p-4 transition-all duration-200 ease-in-out cursor-pointer bg-slate-800/60 border border-slate-700 shadow-md hover:bg-slate-700/80 hover:border-sky-500 hover:shadow-lg"
               >
-                {/* ... (Todo el JSX interno del Card se mantiene igual) ... */}
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Avatar className="h-10 w-10 border-2 border-slate-600 shrink-0">
@@ -264,7 +284,7 @@ export function ThreadList({ threads }: ThreadListProps) {
                         className={`h-7 gap-1.5 transition-all ${
                           userSaved.has(thread.id)
                             ? 'text-blue-500 hover:text-blue-400'
-                            : 'text-slate-400 hover:text-blue-300'
+                            : 'text-slate-400 hover:bg-blue-900/30 hover:text-blue-300'
                         }`}
                         onClick={(e) => handleToggleSave(thread.id, e)}
                       >
@@ -277,7 +297,7 @@ export function ThreadList({ threads }: ThreadListProps) {
                         className={`h-7 gap-1.5 transition-all ${
                           userLikes.has(thread.id)
                             ? 'text-pink-500 hover:text-pink-400'
-                            : 'text-slate-400 hover:text-pink-300'
+                            : 'text-pink-400 hover:bg-pink-900/30 hover:text-pink-300'
                         }`}
                         onClick={(e) => handleToggleLike(thread.id, e)}
                       >

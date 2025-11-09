@@ -1,7 +1,7 @@
 'use client'
 
-// ✅ Importamos 'memo'
-import { useState, useEffect, useMemo, memo } from 'react';
+// ✅ INP: Importa 'useDeferredValue'
+import { useState, useEffect, useMemo, memo, useDeferredValue } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,18 +34,13 @@ const positions = ['Portero', 'Defensa', 'Centrocampista', 'Delantero'];
 const elements = ['Fuego', 'Viento', 'Bosque', 'Montaña'];
 
 
-// ✅ --- 1. COMPONENTE MEMOIZADO ---
-// Extraemos el 'item' de la lista a su propio componente
-// y lo envolvemos en React.memo
-// ------------------------------------
-
+// --- Componente Item (Memoizado) ---
+// (Sin cambios aquí)
 interface PlayerSidebarItemProps {
   player: Player;
   onPlayerSelect: (player: Player) => void;
 }
-
 const PlayerSidebarItem = memo(function PlayerSidebarItem({ player, onPlayerSelect }: PlayerSidebarItemProps) {
-  // La lógica que estaba dentro del .map() ahora vive aquí
   const ElementIcon = elementIcons[player.element || ''] || Flame;
   const elementColor = elementColors[player.element || ''] || 'bg-slate-600 text-white';
   const avatarUrl = getPlayerAvatarUrl(player.avatar);
@@ -88,11 +83,7 @@ const PlayerSidebarItem = memo(function PlayerSidebarItem({ player, onPlayerSele
 PlayerSidebarItem.displayName = 'PlayerSidebarItem';
 
 
-// ✅ --- 2. COMPONENTE PRINCIPAL ---
-// Ahora es mucho más limpio y solo renderiza
-// los items que cambian
-// ------------------------------------
-
+// --- Componente Principal ---
 export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterPosition, setFilterPosition] = useState<string>('all')
@@ -100,6 +91,10 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
   const [teamFilter, setTeamFilter] = useState<string>('all')
   const [allPlayers, setAllPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
+
+  // ✅ INP: Crea un valor "diferido" (baja prioridad) para la búsqueda.
+  // 'searchTerm' se actualiza al instante, 'deferredSearchTerm' espera.
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
   const teams = useMemo(() => {
     // ... (lógica de 'teams' se mantiene igual)
@@ -132,9 +127,10 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
     }
   }
 
-  // Filtrado local (se mantiene igual que en la corrección anterior)
+  // ✅ INP: El filtrado (lento) ahora usa 'deferredSearchTerm'
   const filteredPlayers = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase()
+    const query = deferredSearchTerm.trim().toLowerCase() // Usa el valor diferido
+    
     return allPlayers.filter(player => {
       if (usedPlayerIds.has(player.id)) return false
       if (query.length > 0 && !player.name.toLowerCase().includes(query)) return false
@@ -146,7 +142,8 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
       }
       return true
     })
-  }, [allPlayers, searchTerm, filterPosition, elementFilter, teamFilter, usedPlayerIds])
+    // ✅ INP: La dependencia ahora es el valor diferido
+  }, [allPlayers, deferredSearchTerm, filterPosition, elementFilter, teamFilter, usedPlayerIds]) 
 
   if (loading) {
     return (
@@ -158,13 +155,14 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 to-slate-800">
-      {/* Buscador (se mantiene igual) */}
+      {/* Buscador */}
       <div className="flex-shrink-0 p-4 border-b border-slate-700/50">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Buscar jugador..."
-            value={searchTerm}
+            // ✅ INP: El Input usa 'searchTerm' (instantáneo)
+            value={searchTerm} 
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
           />
@@ -181,9 +179,8 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
         )}
       </div>
 
-      {/* Filtros (se mantienen igual) */}
+      {/* Filtros (Sin cambios) */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-slate-700/50 space-y-3">
-        {/* ... (Todo el JSX de los filtros se mantiene igual) ... */}
          <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label className="text-xs font-medium text-slate-300">Posición</Label>
@@ -199,7 +196,6 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-1">
             <Label className="text-xs font-medium text-slate-300">Elemento</Label>
             <Select value={elementFilter} onValueChange={setElementFilter}>
@@ -210,12 +206,11 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
                 <SelectItem value="all" className="text-slate-200 focus:bg-slate-700">Todos</SelectItem>
                 {elements.map(elem => (
                   <SelectItem key={elem} value={elem} className="text-slate-200 focus:bg-slate-700">{elem}</SelectItem>
-))}
+                ))}
               </SelectContent>
             </Select>
           </div>
         </div>
-
         <div className="space-y-1">
           <Label className="text-xs font-medium text-slate-300">Equipo</Label>
           <Select value={teamFilter} onValueChange={setTeamFilter}>
@@ -254,6 +249,7 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
               {usedPlayerIds.size > 0 && ` (${usedPlayerIds.size} en uso)`}
             </div>
 
+            {/* ✅ INP: Esta lista ahora se actualiza sin bloquear el input */}
             {filteredPlayers.length === 0 ? (
               <div className="text-center py-12 text-slate-400 text-sm">
                 {searchTerm
@@ -262,8 +258,6 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
                 }
               </div>
             ) : (
-              // ✅ Modificado: Usamos el componente memoizado
-              // Esto es mucho más rápido para el INP
               filteredPlayers.map((player) => (
                 <PlayerSidebarItem
                   key={player.id}
