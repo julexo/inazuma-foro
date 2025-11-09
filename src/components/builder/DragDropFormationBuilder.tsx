@@ -211,8 +211,26 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
         <div className="lg:col-span-3">
           <div className={`relative w-full h-[560px] sm:h-[600px] md:h-[660px] lg:h-[720px] xl:h-[760px] bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-xl overflow-hidden shadow-2xl border-2 border-green-800 transition-opacity ${isPending ? 'opacity-70' : 'opacity-100'}`}>
             {/* ... (SVG del campo y textura) ... */}
-            <svg /* ... */></svg>
-            <div /* ... */ />
+            <svg
+              className="absolute inset-0 w-full h-full opacity-30 pointer-events-none transform origin-center rotate-90"
+              preserveAspectRatio="none"
+            >
+              <rect x="0%" y="0%" width="100%" height="100%" fill="none" stroke="white" strokeWidth="2" />
+              <line x1="50%" y1="0%" x2="50%" y2="100%" stroke="white" strokeWidth="2" />
+              <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="2" />
+              <circle cx="50%" cy="50%" r="1%" fill="white" />
+              <rect x="0%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="2" />
+              <rect x="0%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="2" />
+              <rect x="85%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="2" />
+              <rect x="92%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="2" />
+            </svg>
+            <div
+              className="absolute inset-0 opacity-15 pointer-events-none"
+              style={{
+                backgroundImage:
+                  'repeating-linear-gradient(90deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 35px, rgba(255,255,255,0.05) 35px, rgba(255,255,255,0.05) 70px)',
+              }}
+            />
 
             {/* Slots de jugadores (Con onClick para móvil) */}
             {(safeFormation.players || []).map((player) => {

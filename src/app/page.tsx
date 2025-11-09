@@ -1,5 +1,3 @@
-// src/app/page.tsx
-
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -16,18 +14,9 @@ export default function HomePage() {
 
   const fetchThreads = useCallback(async () => {
     try {
-      // Obtener threads con perfiles (username, avatar) si existen
       const { data: threadsData, error: threadsError } = await supabase
         .from('threads')
-        .select(`
-          id,
-          created_at,
-          title,
-          content,
-          formation_data,
-          user_id,
-          profiles(username, avatar_url)
-        `)
+        .select('id, created_at, title, content, formation_data, user_id, profiles(username, avatar_url)')
         .order('created_at', { ascending: false })
 
       if (threadsError) {
@@ -54,12 +43,13 @@ export default function HomePage() {
       }
 
       const adaptedThreads: Thread[] = (threadsData as ThreadRow[]).map((t) => {
-        const safeFormation: Formation = (t.formation_data as Formation) || {
-          name: '4-4-2 (Defecto)',
-          players: []
-        }
 
-        // Resolver perfíl (puede venir como objeto o array)
+        // ✅ 1. CORRECCIÓN DE FORMACIÓN
+        // Comprueba si la formación es válida Y tiene jugadores
+        const formation = t.formation_data as Formation
+        const validFormation = !!(formation && typeof formation === 'object' && 'name' in formation && 'players' in formation && formation.players.length > 0)
+
+        // Resolver perfíl
         let profile: { username?: string | null; avatar_url?: string | null } | null = null
         if (Array.isArray(t.profiles) && t.profiles.length > 0) profile = t.profiles[0]
         else if (t.profiles && !Array.isArray(t.profiles)) profile = t.profiles
@@ -70,10 +60,13 @@ export default function HomePage() {
           content: t.content || '',
           created_at: t.created_at,
           user_id: t.user_id,
-          formation_data: safeFormation,
+          // Si no es válida, pasa 'undefined'
+          formation_data: validFormation ? formation : undefined,
           users: {
             id: t.user_id,
-            email: profile?.username || `Usuario #${t.user_id?.slice(0, 8)}`
+            email: profile?.username || `Usuario #${t.user_id?.slice(0, 8)}`,
+            // ✅ 2. CORRECCIÓN DE AVATAR (Añade esta línea)
+            avatar_url: profile?.avatar_url || null
           }
         }
       })
@@ -108,11 +101,10 @@ export default function HomePage() {
       filtered = filtered.filter(thread => thread.formation_data?.name === filters.formation)
     }
 
-    // Ordenar (por fecha, ya que views/likes no están en el tipo Thread)
+    // Ordenar (por fecha)
     filtered.sort((a, b) => {
       const da = new Date(a.created_at).getTime()
       const db = new Date(b.created_at).getTime()
-      // Si pidieron "popular", mantenemos el mismo criterio por fecha (no hay likes en Thread)
       return db - da
     })
 
@@ -122,23 +114,19 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-orange-800">
       <div className="relative">
-        {/* Efecto de brillo en el fondo */}
         <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 via-transparent to-blue-500/10 pointer-events-none" />
-        
+
         <Header />
 
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 relative">
-          {/* Contenedor principal con efecto glassmorphism */}
           <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-700/50 shadow-xl p-6 space-y-6">
-            {/* Sección de filtros con contador */}
             <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-              <FilterBox 
-                onFilterChange={handleFilterChange} 
+              <FilterBox
+                onFilterChange={handleFilterChange}
                 resultsCount={filteredThreads.length}
               />
             </div>
 
-            {/* Header visual premium para la lista de hilos */}
             <div className="flex items-center gap-3 mb-6 mt-2 px-2">
               <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/30 via-blue-500/30 to-amber-600/30 shadow-lg animate-pulse">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -157,11 +145,9 @@ export default function HomePage() {
               </h2>
             </div>
 
-            {/* Lista de hilos */}
             <div className="relative">
-              {/* Efecto de brillo superior */}
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-orange-500/20 blur-2xl" />
-              
+
               {loading ? (
                 <div className="text-center py-12 text-slate-300">Cargando hilos...</div>
               ) : (
