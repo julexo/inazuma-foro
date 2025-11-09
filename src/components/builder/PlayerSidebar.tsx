@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react';
+// ✅ Importamos 'memo'
+import { useState, useEffect, useMemo, memo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Search, Flame, Wind, TreePine, Mountain, Loader2 } from 'lucide-react';
-import { getAllPlayers, searchPlayersByName, getPlayerAvatarUrl, type Player } from '@/data/PlayerDataBase';
+import { getAllPlayers, getPlayerAvatarUrl, type Player } from '@/data/PlayerDataBase';
 
 interface PlayerSidebarProps {
   onPlayerSelect: (player: Player) => void;
@@ -32,17 +33,76 @@ const elementColors: Record<string, string> = {
 const positions = ['Portero', 'Defensa', 'Centrocampista', 'Delantero'];
 const elements = ['Fuego', 'Viento', 'Bosque', 'Montaña'];
 
+
+// ✅ --- 1. COMPONENTE MEMOIZADO ---
+// Extraemos el 'item' de la lista a su propio componente
+// y lo envolvemos en React.memo
+// ------------------------------------
+
+interface PlayerSidebarItemProps {
+  player: Player;
+  onPlayerSelect: (player: Player) => void;
+}
+
+const PlayerSidebarItem = memo(function PlayerSidebarItem({ player, onPlayerSelect }: PlayerSidebarItemProps) {
+  // La lógica que estaba dentro del .map() ahora vive aquí
+  const ElementIcon = elementIcons[player.element || ''] || Flame;
+  const elementColor = elementColors[player.element || ''] || 'bg-slate-600 text-white';
+  const avatarUrl = getPlayerAvatarUrl(player.avatar);
+  
+  return (
+    <div
+      key={player.id}
+      draggable
+      onDragStart={() => onPlayerSelect(player)}
+      className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50 hover:bg-slate-700/60 hover:border-orange-500/50 cursor-move transition-all duration-200 group"
+    >
+      <Avatar className="h-12 w-12 ring-2 ring-slate-700/50 group-hover:ring-orange-500/50 transition-all flex-shrink-0">
+        <AvatarImage src={avatarUrl} alt={player.name} />
+        <AvatarFallback className="bg-slate-700 text-white text-sm">
+          {player.name.slice(0, 2)}
+        </AvatarFallback>
+      </Avatar>
+      
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-medium text-sm truncate group-hover:text-orange-300 transition-colors">
+          {player.name}
+        </p>
+        <div className="flex items-center gap-1.5 mt-1">
+          <Badge 
+            variant="outline" 
+            className="text-xs px-2 py-0 h-5 border-slate-600 text-slate-300 bg-slate-800/50"
+          >
+            {player.position || 'N/A'}
+          </Badge>
+          {player.element && (
+            <div className={`flex items-center justify-center gap-1 px-2 py-0 h-5 rounded text-xs font-medium ${elementColor}`}>
+              <ElementIcon className="h-3 w-3" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+PlayerSidebarItem.displayName = 'PlayerSidebarItem';
+
+
+// ✅ --- 2. COMPONENTE PRINCIPAL ---
+// Ahora es mucho más limpio y solo renderiza
+// los items que cambian
+// ------------------------------------
+
 export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
   const [filterPosition, setFilterPosition] = useState<string>('all')
   const [elementFilter, setElementFilter] = useState<string>('all')
   const [teamFilter, setTeamFilter] = useState<string>('all')
-  const [allPlayers, setAllPlayers] = useState<Player[]>([]) // Todos los jugadores originales
+  const [allPlayers, setAllPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Extraer equipos únicos
   const teams = useMemo(() => {
+    // ... (lógica de 'teams' se mantiene igual)
     const allTeams = new Set<string>()
     allPlayers.forEach(player => {
       if (player.team && Array.isArray(player.team)) {
@@ -56,7 +116,6 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
     return Array.from(allTeams).sort()
   }, [allPlayers])
 
-  // Cargar jugadores al montar el componente
   useEffect(() => {
     loadPlayers()
   }, [])
@@ -65,7 +124,6 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
     setLoading(true)
     try {
       const players = await getAllPlayers()
-      console.log('Total de jugadores cargados:', players.length) // Debug
       setAllPlayers(players)
     } catch (error) {
       console.error('Error loading players:', error)
@@ -74,75 +132,21 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
     }
   }
 
-  // Buscar jugadores cuando cambia searchQuery
-  useEffect(() => {
-    const performSearch = async () => {
-      if (searchQuery.trim()) {
-        setLoading(true)
-        try {
-          const results = await searchPlayersByName(searchQuery)
-          console.log('Resultados de búsqueda:', results.length) // Debug
-          setAllPlayers(results)
-        } catch (error) {
-          console.error('Error searching:', error)
-        } finally {
-          setLoading(false)
-        }
-      } else {
-        // Si no hay búsqueda, recargar todos los jugadores
-        loadPlayers()
-      }
-    }
-    performSearch()
-  }, [searchQuery])
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      setSearchQuery(searchTerm)
-    }
-  }
-
-  useEffect(() => {
-    if (searchTerm === '') {
-      setSearchQuery('')
-    }
-  }, [searchTerm])
-
-  // Filtrar jugadores localmente
+  // Filtrado local (se mantiene igual que en la corrección anterior)
   const filteredPlayers = useMemo(() => {
-    let filtered = [...allPlayers]
-
-    console.log('Jugadores antes de filtrar:', filtered.length) // Debug
-    console.log('Jugadores usados:', usedPlayerIds.size) // Debug
-
-    // Excluir jugadores ya usados
-    filtered = filtered.filter(player => !usedPlayerIds.has(player.id))
-    console.log('Después de excluir usados:', filtered.length) // Debug
-
-    if (filterPosition !== 'all') {
-      filtered = filtered.filter(player => player.position === filterPosition)
-      console.log(`Después de filtrar por posición (${filterPosition}):`, filtered.length) // Debug
-    }
-
-    if (elementFilter !== 'all') {
-      filtered = filtered.filter(player => player.element === elementFilter)
-      console.log(`Después de filtrar por elemento (${elementFilter}):`, filtered.length) // Debug
-    }
-
-    if (teamFilter !== 'all') {
-      filtered = filtered.filter(player => {
-        if (!player.team || !Array.isArray(player.team)) {
-          return false
-        }
-        return player.team.some(team => team === teamFilter)
-      })
-      console.log(`Después de filtrar por equipo (${teamFilter}):`, filtered.length) // Debug
-    }
-
-    console.log('Jugadores finales a mostrar:', filtered.length) // Debug
-    return filtered
-  }, [allPlayers, filterPosition, elementFilter, teamFilter, usedPlayerIds])
+    const query = searchTerm.trim().toLowerCase()
+    return allPlayers.filter(player => {
+      if (usedPlayerIds.has(player.id)) return false
+      if (query.length > 0 && !player.name.toLowerCase().includes(query)) return false
+      if (filterPosition !== 'all' && player.position !== filterPosition) return false
+      if (elementFilter !== 'all' && player.element !== elementFilter) return false
+      if (teamFilter !== 'all') {
+        if (!player.team || !Array.isArray(player.team)) return false
+        if (!player.team.some(team => team === teamFilter)) return false
+      }
+      return true
+    })
+  }, [allPlayers, searchTerm, filterPosition, elementFilter, teamFilter, usedPlayerIds])
 
   if (loading) {
     return (
@@ -154,39 +158,33 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 to-slate-800">
-      {/* Buscador */}
+      {/* Buscador (se mantiene igual) */}
       <div className="flex-shrink-0 p-4 border-b border-slate-700/50">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Buscar jugador... (presiona Enter)"
+            placeholder="Buscar jugador..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
             className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
           />
         </div>
-        {searchQuery && (
-          <div className="mt-2 flex items-center justify-between text-xs">
-            <span className="text-slate-400">
-              Buscando: <span className="text-orange-400 font-medium">{searchQuery}</span>
-            </span>
+        {searchTerm && (
+          <div className="mt-2 flex items-center justify-end text-xs">
             <button
-              onClick={() => {
-                setSearchTerm('')
-                setSearchQuery('')
-              }}
+              onClick={() => setSearchTerm('')}
               className="text-orange-400 hover:text-orange-300 transition-colors font-medium"
             >
-              Limpiar
+              Limpiar búsqueda
             </button>
           </div>
         )}
       </div>
 
-      {/* Filtros */}
+      {/* Filtros (se mantienen igual) */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-slate-700/50 space-y-3">
-        <div className="grid grid-cols-2 gap-2">
+        {/* ... (Todo el JSX de los filtros se mantiene igual) ... */}
+         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label className="text-xs font-medium text-slate-300">Posición</Label>
             <Select value={filterPosition} onValueChange={setFilterPosition}>
@@ -212,7 +210,7 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
                 <SelectItem value="all" className="text-slate-200 focus:bg-slate-700">Todos</SelectItem>
                 {elements.map(elem => (
                   <SelectItem key={elem} value={elem} className="text-slate-200 focus:bg-slate-700">{elem}</SelectItem>
-                ))}
+))}
               </SelectContent>
             </Select>
           </div>
@@ -252,59 +250,27 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
           <div className="p-3 space-y-2">
             {/* Indicador de total */}
             <div className="text-xs text-slate-400 mb-2 px-2">
-              Mostrando {filteredPlayers.length} de {allPlayers.length} jugadores
+              Mostrando {filteredPlayers.length} jugadores
               {usedPlayerIds.size > 0 && ` (${usedPlayerIds.size} en uso)`}
             </div>
 
             {filteredPlayers.length === 0 ? (
               <div className="text-center py-12 text-slate-400 text-sm">
-                {searchQuery 
-                  ? 'No se encontraron jugadores con ese nombre' 
-                  : usedPlayerIds.size > 0 
-                    ? 'Todos los jugadores disponibles están en uso' 
-                    : 'No hay jugadores disponibles'}
+                {searchTerm
+                  ? 'No se encontraron jugadores con ese nombre'
+                  : 'No hay jugadores que coincidan con los filtros'
+                }
               </div>
             ) : (
-              filteredPlayers.map((player) => {
-                const ElementIcon = elementIcons[player.element || ''] || Flame;
-                const elementColor = elementColors[player.element || ''] || 'bg-slate-600 text-white';
-                const avatarUrl = getPlayerAvatarUrl(player.avatar);
-                
-                return (
-                  <div
-                    key={player.id}
-                    draggable
-                    onDragStart={() => onPlayerSelect(player)}
-                    className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50 hover:bg-slate-700/60 hover:border-orange-500/50 cursor-move transition-all duration-200 group"
-                  >
-                    <Avatar className="h-12 w-12 ring-2 ring-slate-700/50 group-hover:ring-orange-500/50 transition-all flex-shrink-0">
-                      <AvatarImage src={avatarUrl} alt={player.name} />
-                      <AvatarFallback className="bg-slate-700 text-white text-sm">
-                        {player.name.slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium text-sm truncate group-hover:text-orange-300 transition-colors">
-                        {player.name}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <Badge 
-                          variant="outline" 
-                          className="text-xs px-2 py-0 h-5 border-slate-600 text-slate-300 bg-slate-800/50"
-                        >
-                          {player.position || 'N/A'}
-                        </Badge>
-                        {player.element && (
-                          <div className={`flex items-center justify-center gap-1 px-2 py-0 h-5 rounded text-xs font-medium ${elementColor}`}>
-                            <ElementIcon className="h-3 w-3" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
+              // ✅ Modificado: Usamos el componente memoizado
+              // Esto es mucho más rápido para el INP
+              filteredPlayers.map((player) => (
+                <PlayerSidebarItem
+                  key={player.id}
+                  player={player}
+                  onPlayerSelect={onPlayerSelect}
+                />
+              ))
             )}
           </div>
         </ScrollArea>

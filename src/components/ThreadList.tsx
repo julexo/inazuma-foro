@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Eye, Heart, Bookmark, Edit3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect,  useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link';
@@ -23,31 +23,7 @@ export function ThreadList({ threads }: ThreadListProps) {
   const [userSaved, setUserSaved] = useState<Set<string>>(new Set())
   const [likesCount, setLikesCount] = useState<Record<string, number>>({})
 
-  const fetchUserLikes = useCallback(async () => {
-    if (!user) return
-
-    const { data } = await supabase
-      .from('thread_likes')
-      .select('thread_id')
-      .eq('user_id', user.id)
-
-    if (data) {
-      setUserLikes(new Set(data.map(like => like.thread_id)))
-    }
-  }, [user])
-
-  const fetchUserSaved = useCallback(async () => {
-    if (!user) return
-
-    const { data } = await supabase
-      .from('saved_threads')
-      .select('thread_id')
-      .eq('user_id', user.id)
-
-    if (data) {
-      setUserSaved(new Set(data.map(saved => saved.thread_id)))
-    }
-  }, [user])
+  // ❌ Eliminados: fetchUserLikes y fetchUserSaved
 
   // Memoiza los contadores de likes para evitar recalcular en cada render
   const initialCounts = useMemo(() => {
@@ -56,13 +32,37 @@ export function ThreadList({ threads }: ThreadListProps) {
     return counts
   }, [threads])
 
+  // ✅ Modificado: Carga de datos del usuario en paralelo
   useEffect(() => {
     setLikesCount(initialCounts)
     if (user) {
-      fetchUserLikes()
-      fetchUserSaved()
+      const fetchData = async () => {
+        try {
+          // Ejecuta ambas peticiones en paralelo
+          const [likesRes, savedRes] = await Promise.all([
+            supabase
+              .from('thread_likes')
+              .select('thread_id')
+              .eq('user_id', user.id),
+            supabase
+              .from('saved_threads')
+              .select('thread_id')
+              .eq('user_id', user.id)
+          ]);
+
+          if (likesRes.data) {
+            setUserLikes(new Set(likesRes.data.map(like => like.thread_id)))
+          }
+          if (savedRes.data) {
+            setUserSaved(new Set(savedRes.data.map(saved => saved.thread_id)))
+          }
+        } catch (error) {
+          console.error("Error fetching user likes/saves:", error)
+        }
+      }
+      fetchData()
     }
-  }, [user, threads, fetchUserLikes, fetchUserSaved, initialCounts])
+  }, [user, threads, initialCounts]) // ✅ Dependencias actualizadas
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -82,6 +82,7 @@ export function ThreadList({ threads }: ThreadListProps) {
     router.push(`/threads/${threadId}`)
   };
 
+  // ... (handleToggleLike se mantiene igual) ...
   const handleToggleLike = async (threadId: string, e: React.MouseEvent) => {
     e.stopPropagation()
 
@@ -145,6 +146,7 @@ export function ThreadList({ threads }: ThreadListProps) {
     }
   }
 
+  // ... (handleToggleSave se mantiene igual) ...
   const handleToggleSave = async (threadId: string, e: React.MouseEvent) => {
     e.stopPropagation()
 
@@ -217,6 +219,7 @@ export function ThreadList({ threads }: ThreadListProps) {
                 onClick={() => handleThreadClick(thread.id)}
                 className="p-4 transition-all duration-200 ease-in-out cursor-pointer bg-slate-800/60 border border-slate-700 shadow-md hover:bg-slate-700/80 hover:border-sky-500 hover:shadow-lg"
               >
+                {/* ... (Todo el JSX interno del Card se mantiene igual) ... */}
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Avatar className="h-10 w-10 border-2 border-slate-600 shrink-0">
@@ -261,7 +264,7 @@ export function ThreadList({ threads }: ThreadListProps) {
                         className={`h-7 gap-1.5 transition-all ${
                           userSaved.has(thread.id)
                             ? 'text-blue-500 hover:text-blue-400'
-                            : 'text-slate-400 hover:bg-blue-900/30 hover:text-blue-300'
+                            : 'text-slate-400 hover:text-blue-300'
                         }`}
                         onClick={(e) => handleToggleSave(thread.id, e)}
                       >
@@ -274,7 +277,7 @@ export function ThreadList({ threads }: ThreadListProps) {
                         className={`h-7 gap-1.5 transition-all ${
                           userLikes.has(thread.id)
                             ? 'text-pink-500 hover:text-pink-400'
-                            : 'text-pink-400 hover:bg-pink-900/30 hover:text-pink-300'
+                            : 'text-slate-400 hover:text-pink-300'
                         }`}
                         onClick={(e) => handleToggleLike(thread.id, e)}
                       >
