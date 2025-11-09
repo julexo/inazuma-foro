@@ -1,7 +1,7 @@
 'use client'
 
-// ✅ INP: Importa 'useDeferredValue'
-import { useState, useEffect, useMemo, memo, useDeferredValue } from 'react';
+// ✅ 1. Importa 'useTransition' y quita 'useDeferredValue'
+import { useState, useEffect, useMemo, memo, useTransition } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,20 +16,19 @@ interface PlayerSidebarProps {
   usedPlayerIds: Set<string>;
 }
 
+// ... (constantes elementIcons, elementColors, positions, elements se mantienen igual)
 const elementIcons: Record<string, typeof Flame> = {
   Fuego: Flame,
   Viento: Wind,
   Bosque: TreePine,
   Montaña: Mountain,
 };
-
 const elementColors: Record<string, string> = {
   Fuego: 'bg-orange-500/90 text-white',
   Viento: 'bg-cyan-500/90 text-white',
   Bosque: 'bg-green-500/90 text-white',
   Montaña: 'bg-amber-600/90 text-white',
 };
-
 const positions = ['Portero', 'Defensa', 'Centrocampista', 'Delantero'];
 const elements = ['Fuego', 'Viento', 'Bosque', 'Montaña'];
 
@@ -85,19 +84,21 @@ PlayerSidebarItem.displayName = 'PlayerSidebarItem';
 
 // --- Componente Principal ---
 export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerSidebarProps) {
+  // Estados para el valor "controlado" de los inputs
   const [searchTerm, setSearchTerm] = useState('')
   const [filterPosition, setFilterPosition] = useState<string>('all')
   const [elementFilter, setElementFilter] = useState<string>('all')
   const [teamFilter, setTeamFilter] = useState<string>('all')
+  
   const [allPlayers, setAllPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
 
-  // ✅ INP: Crea un valor "diferido" (baja prioridad) para la búsqueda.
-  // 'searchTerm' se actualiza al instante, 'deferredSearchTerm' espera.
-  const deferredSearchTerm = useDeferredValue(searchTerm);
+  // ✅ 2. Inicializa useTransition
+  const [isPending, startTransition] = useTransition();
+
+  // ❌ 3. 'useDeferredValue' eliminado
 
   const teams = useMemo(() => {
-    // ... (lógica de 'teams' se mantiene igual)
     const allTeams = new Set<string>()
     allPlayers.forEach(player => {
       if (player.team && Array.isArray(player.team)) {
@@ -127,9 +128,9 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
     }
   }
 
-  // ✅ INP: El filtrado (lento) ahora usa 'deferredSearchTerm'
+  // ✅ 4. El filtrado (lento) usa los estados normales.
   const filteredPlayers = useMemo(() => {
-    const query = deferredSearchTerm.trim().toLowerCase() // Usa el valor diferido
+    const query = searchTerm.trim().toLowerCase()
     
     return allPlayers.filter(player => {
       if (usedPlayerIds.has(player.id)) return false
@@ -142,8 +143,8 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
       }
       return true
     })
-    // ✅ INP: La dependencia ahora es el valor diferido
-  }, [allPlayers, deferredSearchTerm, filterPosition, elementFilter, teamFilter, usedPlayerIds]) 
+    // ✅ 5. Las dependencias son los estados normales
+  }, [allPlayers, searchTerm, filterPosition, elementFilter, teamFilter, usedPlayerIds])
 
   if (loading) {
     return (
@@ -153,6 +154,31 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
     )
   }
 
+  // ✅ 6. Manejadores envueltos en startTransition
+  const handleSearchChange = (value: string) => {
+    startTransition(() => {
+      setSearchTerm(value);
+    });
+  };
+
+  const handlePositionChange = (value: string) => {
+    startTransition(() => {
+      setFilterPosition(value);
+    });
+  };
+
+  const handleElementChange = (value: string) => {
+    startTransition(() => {
+      setElementFilter(value);
+    });
+  };
+
+  const handleTeamChange = (value: string) => {
+    startTransition(() => {
+      setTeamFilter(value);
+    });
+  };
+
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 to-slate-800">
       {/* Buscador */}
@@ -161,16 +187,17 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Buscar jugador..."
-            // ✅ INP: El Input usa 'searchTerm' (instantáneo)
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)}
+            // ✅ 7. El 'value' es el estado 'searchTerm'
+            // El 'onChange' usa el manejador con transición
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
           />
         </div>
         {searchTerm && (
           <div className="mt-2 flex items-center justify-end text-xs">
             <button
-              onClick={() => setSearchTerm('')}
+              onClick={() => handleSearchChange('')} // También usa la transición
               className="text-orange-400 hover:text-orange-300 transition-colors font-medium"
             >
               Limpiar búsqueda
@@ -179,12 +206,13 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
         )}
       </div>
 
-      {/* Filtros (Sin cambios) */}
+      {/* Filtros */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-slate-700/50 space-y-3">
          <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label className="text-xs font-medium text-slate-300">Posición</Label>
-            <Select value={filterPosition} onValueChange={setFilterPosition}>
+            {/* ✅ 8. Usamos los nuevos manejadores */}
+            <Select value={filterPosition} onValueChange={handlePositionChange}>
               <SelectTrigger className="h-9 bg-slate-800/50 border-slate-700 text-slate-200 text-sm">
                 <SelectValue />
               </SelectTrigger>
@@ -196,9 +224,10 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
               </SelectContent>
             </Select>
           </div>
+
           <div className="space-y-1">
             <Label className="text-xs font-medium text-slate-300">Elemento</Label>
-            <Select value={elementFilter} onValueChange={setElementFilter}>
+            <Select value={elementFilter} onValueChange={handleElementChange}>
               <SelectTrigger className="h-9 bg-slate-800/50 border-slate-700 text-slate-200 text-sm">
                 <SelectValue />
               </SelectTrigger>
@@ -211,9 +240,10 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
             </Select>
           </div>
         </div>
+
         <div className="space-y-1">
           <Label className="text-xs font-medium text-slate-300">Equipo</Label>
-          <Select value={teamFilter} onValueChange={setTeamFilter}>
+          <Select value={teamFilter} onValueChange={handleTeamChange}>
             <SelectTrigger className="h-9 bg-slate-800/50 border-slate-700 text-slate-200 text-sm">
               <SelectValue placeholder="Seleccionar equipo" />
             </SelectTrigger>
@@ -240,16 +270,15 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
       </div>
 
       {/* Lista de jugadores */}
-      <div className="flex-1 min-h-0">
+      {/* ✅ 9. Usamos 'isPending' para dar feedback visual de carga */}
+      <div className={`flex-1 min-h-0 transition-opacity ${isPending ? 'opacity-50' : 'opacity-100'}`}>
         <ScrollArea className="h-full">
           <div className="p-3 space-y-2">
-            {/* Indicador de total */}
             <div className="text-xs text-slate-400 mb-2 px-2">
               Mostrando {filteredPlayers.length} jugadores
               {usedPlayerIds.size > 0 && ` (${usedPlayerIds.size} en uso)`}
             </div>
 
-            {/* ✅ INP: Esta lista ahora se actualiza sin bloquear el input */}
             {filteredPlayers.length === 0 ? (
               <div className="text-center py-12 text-slate-400 text-sm">
                 {searchTerm

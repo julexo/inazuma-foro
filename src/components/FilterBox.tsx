@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+// ✅ 1. Importa 'useTransition'
+import { useState, useEffect, useRef, useCallback, useTransition } from 'react'
 import { Filter, Search, TrendingUp, Calendar, Sparkles, ArrowUpDown, X } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -19,14 +20,18 @@ interface FilterBoxProps {
 export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [formation, setFormation] = useState('all')
+  const [sortBy, setSortBy] = useState('recent')
   const [showResults, setShowResults] = useState(false)
   const [searchResults, setSearchResults] = useState<Player[]>([])
   const [isInputFocused, setIsInputFocused] = useState(false)
-  const [sortBy, setSortBy] = useState('recent')
+  
   const searchRef = useRef<HTMLDivElement>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // ... (useEffect de handleClickOutside se mantiene) ...
+  // ✅ 2. Inicializa useTransition
+  const [isPending, startTransition] = useTransition()
+
+  // Efecto para clics fuera (sin cambios)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -38,7 +43,7 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // ... (useEffect de autocompletado se mantiene) ...
+  // Efecto para la lista de autocompletado (sin cambios)
   useEffect(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -65,74 +70,88 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
     }
   }, [searchQuery, isInputFocused])
 
+  // --- ✅ 3. Manejadores de filtro envueltos en startTransition ---
 
-  // Función para aplicar filtros (usada por Enter)
-  const applyFilters = useCallback(() => {
-    if (onFilterChange) {
-      onFilterChange({
-        playerName: searchQuery,
-        formation: formation,
-        sortBy: sortBy
-      })
+  // Manejador para el input de búsqueda
+  const handleSearchChange = (query: string) => {
+    // Actualiza el input inmediatamente
+    setSearchQuery(query)
+    
+    // El 'debounce' ya hace que esto no sea bloqueante para el 'onFilterChange'
+    // Pero mantenemos la lógica de la lista de resultados
+    if (!isInputFocused) {
+      setIsInputFocused(true);
     }
+  }
+
+  // Manejador para el 'Enter' en el input
+  const handleSearchSubmit = () => {
+    startTransition(() => {
+      if (onFilterChange) {
+        onFilterChange({ playerName: searchQuery, formation, sortBy })
+      }
+    })
     setShowResults(false)
     setIsInputFocused(false)
-  }, [onFilterChange, searchQuery, formation, sortBy])
+  }
 
-  // Manejar Enter en el input
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      applyFilters()
-    }
-  }, [applyFilters])
+  // Manejador para el Select de Formación
+  const handleFormationChange = (form: string) => {
+    setFormation(form) // Actualiza el Select inmediatamente
+    startTransition(() => {
+      if (onFilterChange) {
+        onFilterChange({ playerName: searchQuery, formation: form, sortBy })
+      }
+    })
+  }
 
-  // Manejadores de foco y selección (se mantienen)
+  // Manejador para el Select de Orden
+  const handleSortChange = (sort: string) => {
+    setSortBy(sort) // Actualiza el Select inmediatamente
+    startTransition(() => {
+      if (onFilterChange) {
+        onFilterChange({ playerName: searchQuery, formation, sortBy: sort })
+      }
+    })
+  }
+
+  // Manejador para limpiar filtros
+  const handleClearFilters = () => {
+    setSearchQuery('')
+    setFormation('all')
+    setSortBy('recent')
+    startTransition(() => {
+      if (onFilterChange) {
+        onFilterChange({ playerName: '', formation: 'all', sortBy: 'recent' })
+      }
+    })
+  }
+
+  // --- (Funciones de UI que no cambian el filtro principal) ---
   const handleInputFocus = useCallback(() => {
     setIsInputFocused(true)
-    if (searchQuery.length >= 2) {
-      setShowResults(true)
-    }
-  }, [searchQuery])
+  }, [])
 
-  const handlePlayerSelect = useCallback((player: Player) => {
+  const handlePlayerSelect = (player: Player) => {
     setSearchQuery(player.name)
     setShowResults(false)
     setIsInputFocused(false)
-    if (onFilterChange) {
-      onFilterChange({
-        playerName: player.name,
-        formation: formation,
-        sortBy: sortBy
-      })
-    }
-  }, [onFilterChange, formation, sortBy])
-
-  // ✅ --- ESTA ES LA FUNCIÓN QUE REEMPLAZA A LAS OTRAS DOS ---
-  // Se usa en el 'onChange' del Input y en los 'onValueChange' de los Select
-  const handleChange = useCallback((newPlayerName?: string, newFormation?: string, newSortBy?: string) => {
-    const pn = newPlayerName ?? searchQuery
-    const fm = newFormation ?? formation
-    const sb = newSortBy ?? sortBy
-
-    setSearchQuery(pn)
-    setFormation(fm)
-    setSortBy(sb)
-
-    if (onFilterChange) {
-      onFilterChange({ playerName: pn, formation: fm, sortBy: sb })
-    }
-  }, [onFilterChange, searchQuery, formation, sortBy])
+    startTransition(() => {
+      if (onFilterChange) {
+        onFilterChange({ playerName: player.name, formation, sortBy })
+      }
+    })
+  }
   
-
   return (
-    <div className="relative overflow-hidden">
+    // ✅ 4. Usa 'isPending' para dar feedback visual
+    <div className={`relative overflow-hidden transition-opacity ${isPending ? 'opacity-70' : 'opacity-100'}`}>
       {/* ... (Efectos decorativos) ... */}
       <div className="absolute -top-20 -left-20 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl animate-pulse" />
       <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       
       <div className="relative">
-        {/* ... (Header premium) ... */}
+        {/* ... (Header premium con título y badge) ... */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-5 border-b border-slate-700/50">
            <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/20 via-orange-600/20 to-amber-600/20 border border-orange-500/40 shadow-lg">
@@ -181,15 +200,15 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
                   type="text"
                   placeholder="Ej: Mark Evans"
                   value={searchQuery}
-                  // ✅ Usa la nueva función 'handleChange'
-                  onChange={(e) => handleChange(e.target.value, undefined, undefined)}
+                  // ✅ 5. Usa los nuevos manejadores
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   onFocus={handleInputFocus}
-                  onKeyDown={handleKeyDown}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit() }}
                   className="pl-10 bg-slate-900/70 border-slate-700/70 text-white placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50 transition-all duration-300 h-11"
                   autoComplete="off"
                 />
 
-                {/* Lista de resultados (se mantiene) */}
+                {/* Lista de autocompletado (sin cambios) */}
                 {showResults && searchResults.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-20 overflow-hidden">
                     <ul className="divide-y divide-slate-700">
@@ -235,8 +254,8 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
                 <div className="flex-1 h-px bg-gradient-to-r from-blue-500/50 to-transparent" />
               </div>
               
-              {/* ✅ Usa la nueva función 'handleChange' */}
-              <Select value={formation} onValueChange={(val) => handleChange(undefined, val, undefined)}>
+              {/* ✅ 5. Usa el nuevo manejador */}
+              <Select value={formation} onValueChange={handleFormationChange} disabled={isPending}>
                 <SelectTrigger className="bg-slate-900/70 border-slate-700/70 text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 h-11">
                   <SelectValue placeholder="Todas las formaciones" />
                 </SelectTrigger>
@@ -263,7 +282,7 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
           {/* Ordenar por */}
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/50 to-pink-500/50 rounded-xl blur opacity-0 group-hover:opacity-100 transition-all duration-500" />
-            <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900/9AF0 backdrop-blur-xl rounded-xl border border-slate-700/60 p-4 shadow-2xl group-hover:shadow-purple-500/20 transition-all duration-300">
+            <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900/90 backdrop-blur-xl rounded-xl border border-slate-700/60 p-4 shadow-2xl group-hover:shadow-purple-500/20 transition-all duration-300">
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30">
@@ -276,8 +295,8 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
                 <div className="flex-1 h-px bg-gradient-to-r from-purple-500/50 to-transparent" />
               </div>
               
-              {/* ✅ Usa la nueva función 'handleChange' */}
-              <Select value={sortBy} onValueChange={(val) => handleChange(undefined, undefined, val)}>
+              {/* ✅ 5. Usa el nuevo manejador */}
+              <Select value={sortBy} onValueChange={handleSortChange} disabled={isPending}>
                 <SelectTrigger className="bg-slate-900/70 border-slate-700/70 text-white focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-300 h-11">
                   <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
@@ -312,10 +331,11 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
           </div>
           {(searchQuery || formation !== 'all' || sortBy !== 'recent') && (
             <Button
-              onClick={() => handleChange('', 'all', 'recent')}
+              onClick={handleClearFilters} // ✅ Usa el nuevo manejador
               variant="ghost"
               size="sm"
               className="text-slate-300 hover:text-white hover:bg-slate-700/50"
+              disabled={isPending}
             >
               <X className="h-4 w-4 mr-2" />
               Limpiar filtros

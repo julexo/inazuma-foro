@@ -25,7 +25,7 @@ export function ThreadList({ threads }: ThreadListProps) {
 
   // ✅ INP: Inicializa useTransition. 
   // Usamos 'startTransition' para marcar actualizaciones no urgentes.
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   // Memoiza los contadores de likes (sin cambios)
   const initialCounts = useMemo(() => {

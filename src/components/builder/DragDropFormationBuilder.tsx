@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react';
+// ✅ 1. Importa 'useTransition'
+import { useState, useMemo, useCallback, useTransition } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Trash2, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
@@ -9,7 +10,7 @@ import type { Player } from '@/data/PlayerDataBase';
 import type { Formation } from '@/types';
 import PlayerSidebar from './PlayerSidebar';
 import { formationsDatabase } from '@/lib/formationDatabase';
-import { Badge } from '@/components/ui/badge'; // + importar Badge
+import { Badge } from '@/components/ui/badge';
 
 interface DragDropFormationBuilderProps {
   formation: Formation;
@@ -21,7 +22,10 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
   const [hoveredSlot, setHoveredSlot] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Fallback seguro si formation es undefined o no tiene jugadores válidos
+  // ✅ 2. Inicializa useTransition
+  const [isPending, startTransition] = useTransition();
+
+  // Fallback seguro (sin cambios)
   const safeFormation = useMemo<Formation>(() => {
     if (formation && Array.isArray(formation.players) && formation.players.length > 0) {
       return formation
@@ -29,10 +33,10 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
     const fallback =
       formationsDatabase['4-4-2 Diamond'] ||
       formationsDatabase[Object.keys(formationsDatabase)[0]]
-    // Clonar para evitar mutaciones accidentales
     return JSON.parse(JSON.stringify(fallback)) as Formation
   }, [formation])
 
+  // usedPlayerIds (sin cambios)
   const usedPlayerIds = useMemo(() => {
     return new Set(
       (safeFormation.players || [])
@@ -41,6 +45,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
     )
   }, [safeFormation])
 
+  // validatePosition (sin cambios)
   const validatePosition = useCallback((playerData: Player, position: number): boolean => {
     if (position === 1 && playerData.position !== 'Portero') {
       setError('Solo puedes colocar porteros en la posición 1');
@@ -50,6 +55,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
     return true;
   }, [])
 
+  // handleDragStart (sin cambios)
   const handleDragStart = useCallback((player: Player) => {
     try {
       setDraggedPlayer(player);
@@ -59,29 +65,33 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
     }
   }, [])
 
+  // handleDragOver (sin cambios)
   const handleDragOver = useCallback((e: React.DragEvent, slotId: number) => {
     e.preventDefault();
     setHoveredSlot(slotId);
   }, [])
 
+  // handleDragLeave (sin cambios)
   const handleDragLeave = useCallback(() => {
     setHoveredSlot(null);
   }, [])
 
-  // No sobrescribir el nombre del slot al asignar jugador (conserva "Portero/Defensa/Mediocampo/Delantero")
+  // ✅ 3. handleDrop envuelto en startTransition
   const handleDrop = useCallback((e: React.DragEvent, slotId: number) => {
     try {
       e.preventDefault();
       if (!draggedPlayer) return;
       if (!validatePosition(draggedPlayer, slotId)) return;
 
-      const updatedPlayers = (safeFormation.players || []).map(player =>
-        player.id === slotId
-          ? { ...player, playerData: draggedPlayer } // ← solo asigna el jugador
-          : player
-      );
+      startTransition(() => {
+        const updatedPlayers = (safeFormation.players || []).map(player =>
+          player.id === slotId
+            ? { ...player, playerData: draggedPlayer } // ← solo asigna el jugador
+            : player
+        );
+        onFormationChange({ ...safeFormation, players: updatedPlayers });
+      });
 
-      onFormationChange({ ...safeFormation, players: updatedPlayers });
       setDraggedPlayer(null);
       setHoveredSlot(null);
     } catch (error) {
@@ -90,17 +100,19 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
     }
   }, [draggedPlayer, onFormationChange, safeFormation, validatePosition])
 
-  // Al quitar jugador, mantener el nombre del slot (no reasignar)
+  // ✅ 4. handleRemovePlayer envuelto en startTransition
   const handleRemovePlayer = useCallback((slotId: number) => {
-    const updatedPlayers = (safeFormation.players || []).map(player =>
-      player.id === slotId
-        ? { ...player, playerData: undefined } // ← no cambiar "name"
-        : player
-    );
-    onFormationChange({ ...safeFormation, players: updatedPlayers });
+    startTransition(() => {
+      const updatedPlayers = (safeFormation.players || []).map(player =>
+        player.id === slotId
+          ? { ...player, playerData: undefined } // ← no cambiar "name"
+          : player
+      );
+      onFormationChange({ ...safeFormation, players: updatedPlayers });
+    });
   }, [onFormationChange, safeFormation])
 
-  // Estilos del slot (sin cambios funcionales)
+  // getSlotStyles (sin cambios)
   const getSlotStyles = (isHovered: boolean, hasPlayer: boolean) => `
     w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full
     flex items-center justify-center 
@@ -112,7 +124,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
 
   return (
     <div className="space-y-4">
-      {/* Mensaje de error */}
+      {/* ... (Mensajes de error e info) ... */}
       {error && (
         <div className="bg-red-900/40 backdrop-blur-sm border border-red-500/50 text-red-200 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg" role="alert">
           <div className="p-2 rounded-lg bg-red-500/20">
@@ -121,8 +133,6 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
           <p className="text-sm font-medium">{error}</p>
         </div>
       )}
-
-      {/* Mensaje informativo */}
       <div className="bg-slate-800/50 backdrop-blur-sm border border-sky-500/30 text-slate-200 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg">
         <div className="p-2 rounded-lg bg-sky-500/20">
           <Info className="h-5 w-5 text-sky-400" />
@@ -132,7 +142,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
         </p>
       </div>
 
-      {/* Nombre de la formación actual (por defecto 4-4-2 Diamond) */}
+      {/* ... (Nombre de la formación) ... */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-200">
           Formación actual:{' '}
@@ -142,9 +152,9 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
         </p>
       </div>
 
-      {/* Zona sincronizada: sidebar (izquierda) y campo (derecha) con la MISMA altura */}
+      {/* Zona sincronizada */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
-        {/* Sidebar jugadores: empieza y termina junto al campo, con scroll propio */}
+        {/* Sidebar */}
         <div className="lg:col-span-1 overflow-y-auto pr-2 h-[560px] sm:h-[600px] md:h-[660px] lg:h-[720px] xl:h-[760px]">
           <PlayerSidebar 
             onPlayerSelect={handleDragStart}
@@ -152,38 +162,24 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
           />
         </div>
 
-        {/* Campo de juego (sin scroll) con la misma altura */}
+        {/* Campo de juego */}
         <div className="lg:col-span-3">
-          <div className="relative w-full h-[560px] sm:h-[600px] md:h-[660px] lg:h-[720px] xl:h-[760px] bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-xl overflow-hidden shadow-2xl border-2 border-green-800">
-            {/* Marcas del campo rotadas 90° - LÍNEAS DE BANDA HASTA EL FINAL */}
+          {/* ✅ 5. Usamos 'isPending' para feedback visual en el campo */}
+          <div className={`relative w-full h-[560px] sm:h-[600px] md:h-[660px] lg:h-[720px] xl:h-[760px] bg-gradient-to-b from-green-500 via-green-600 to-green-700 rounded-xl overflow-hidden shadow-2xl border-2 border-green-800 transition-opacity ${isPending ? 'opacity-70' : 'opacity-100'}`}>
+            {/* ... (SVG del campo y textura) ... */}
             <svg
               className="absolute inset-0 w-full h-full opacity-30 pointer-events-none transform origin-center rotate-90"
               preserveAspectRatio="none"
             >
-              {/* Borde exterior del campo */}
               <rect x="0%" y="0%" width="100%" height="100%" fill="none" stroke="white" strokeWidth="2" />
-              
-              {/* Línea central - de banda a banda (0% a 100%) */}
               <line x1="50%" y1="0%" x2="50%" y2="100%" stroke="white" strokeWidth="2" />
-              
-              {/* Círculo central */}
               <circle cx="50%" cy="50%" r="10%" fill="none" stroke="white" strokeWidth="2" />
               <circle cx="50%" cy="50%" r="1%" fill="white" />
-              
-              {/* Área grande izquierda - hasta el borde Y */}
               <rect x="0%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="2" />
-              
-              {/* Área pequeña izquierda - hasta el borde Y */}
               <rect x="0%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="2" />
-              
-              {/* Área grande derecha - hasta el borde Y */}
               <rect x="85%" y="25%" width="15%" height="50%" fill="none" stroke="white" strokeWidth="2" />
-              
-              {/* Área pequeña derecha - hasta el borde Y */}
               <rect x="92%" y="37.5%" width="8%" height="25%" fill="none" stroke="white" strokeWidth="2" />
             </svg>
-
-            {/* Textura del césped en franjas VERTICALES */}
             <div
               className="absolute inset-0 opacity-15 pointer-events-none"
               style={{
@@ -192,7 +188,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
               }}
             />
 
-            {/* Slots de jugadores */}
+            {/* Slots de jugadores (sin cambios internos) */}
             {(safeFormation.players || []).map((player) => {
               const playerData = player.playerData;
               const isHovered = hoveredSlot === player.id;
@@ -229,19 +225,16 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
                       )}
                     </div>
 
-                    {/* Etiqueta SIEMPRE visible con la posición del slot */}
                     <div className="mt-1">
                       <span className="inline-block px-2 py-0.5 rounded bg-black/75 text-white text-[10px] sm:text-xs border border-white/10">
                         {player.name}
                       </span>
                     </div>
 
-                    {/* Tooltip al pasar el ratón con el nombre del jugador (si existe) */}
                     <div className="absolute left-1/2 -translate-x-1/2 top-full mt-8 whitespace-nowrap bg-black/90 text-white px-3 py-1.5 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
                       {playerData ? playerData.name : 'Vacío'}
                     </div>
 
-                    {/* Botón eliminar jugador */}
                     {playerData && (
                       <Button
                         size="icon"
@@ -264,7 +257,7 @@ export function DragDropFormationBuilder({ formation, onFormationChange }: DragD
         </div>
       </div>
 
-      {/* Contador de jugadores */}
+      {/* Contador de jugadores (sin cambios) */}
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 shadow-lg p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
