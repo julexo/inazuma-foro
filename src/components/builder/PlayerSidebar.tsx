@@ -1,6 +1,5 @@
 'use client'
 
-// ✅ 1. Importa 'useTransition' y quita 'useDeferredValue'
 import { useState, useEffect, useMemo, memo, useTransition } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +15,7 @@ interface PlayerSidebarProps {
   usedPlayerIds: Set<string>;
 }
 
-// ... (constantes elementIcons, elementColors, positions, elements se mantienen igual)
+// ... (constantes de iconos y colores)
 const elementIcons: Record<string, typeof Flame> = {
   Fuego: Flame,
   Viento: Wind,
@@ -34,7 +33,6 @@ const elements = ['Fuego', 'Viento', 'Bosque', 'Montaña'];
 
 
 // --- Componente Item (Memoizado) ---
-// (Sin cambios aquí)
 interface PlayerSidebarItemProps {
   player: Player;
   onPlayerSelect: (player: Player) => void;
@@ -47,8 +45,9 @@ const PlayerSidebarItem = memo(function PlayerSidebarItem({ player, onPlayerSele
   return (
     <div
       key={player.id}
-      draggable
-      onDragStart={() => onPlayerSelect(player)}
+      draggable // Para escritorio
+      onDragStart={() => onPlayerSelect(player)} // Para escritorio
+      onClick={() => onPlayerSelect(player)} // ✅ AÑADIDO: Para el clic en móvil
       className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50 hover:bg-slate-700/60 hover:border-orange-500/50 cursor-move transition-all duration-200 group"
     >
       <Avatar className="h-12 w-12 ring-2 ring-slate-700/50 group-hover:ring-orange-500/50 transition-all flex-shrink-0">
@@ -82,21 +81,15 @@ const PlayerSidebarItem = memo(function PlayerSidebarItem({ player, onPlayerSele
 PlayerSidebarItem.displayName = 'PlayerSidebarItem';
 
 
-// --- Componente Principal ---
+// --- Componente Principal (con 'useTransition' para INP) ---
 export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerSidebarProps) {
-  // Estados para el valor "controlado" de los inputs
   const [searchTerm, setSearchTerm] = useState('')
   const [filterPosition, setFilterPosition] = useState<string>('all')
   const [elementFilter, setElementFilter] = useState<string>('all')
   const [teamFilter, setTeamFilter] = useState<string>('all')
-  
   const [allPlayers, setAllPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
-
-  // ✅ 2. Inicializa useTransition
   const [isPending, startTransition] = useTransition();
-
-  // ❌ 3. 'useDeferredValue' eliminado
 
   const teams = useMemo(() => {
     const allTeams = new Set<string>()
@@ -128,10 +121,8 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
     }
   }
 
-  // ✅ 4. El filtrado (lento) usa los estados normales.
   const filteredPlayers = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
-    
     return allPlayers.filter(player => {
       if (usedPlayerIds.has(player.id)) return false
       if (query.length > 0 && !player.name.toLowerCase().includes(query)) return false
@@ -143,7 +134,6 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
       }
       return true
     })
-    // ✅ 5. Las dependencias son los estados normales
   }, [allPlayers, searchTerm, filterPosition, elementFilter, teamFilter, usedPlayerIds])
 
   if (loading) {
@@ -154,25 +144,21 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
     )
   }
 
-  // ✅ 6. Manejadores envueltos en startTransition
   const handleSearchChange = (value: string) => {
     startTransition(() => {
       setSearchTerm(value);
     });
   };
-
   const handlePositionChange = (value: string) => {
     startTransition(() => {
       setFilterPosition(value);
     });
   };
-
   const handleElementChange = (value: string) => {
     startTransition(() => {
       setElementFilter(value);
     });
   };
-
   const handleTeamChange = (value: string) => {
     startTransition(() => {
       setTeamFilter(value);
@@ -181,14 +167,11 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 to-slate-800">
-      {/* Buscador */}
       <div className="flex-shrink-0 p-4 border-b border-slate-700/50">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Buscar jugador..."
-            // ✅ 7. El 'value' es el estado 'searchTerm'
-            // El 'onChange' usa el manejador con transición
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50"
@@ -197,7 +180,7 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
         {searchTerm && (
           <div className="mt-2 flex items-center justify-end text-xs">
             <button
-              onClick={() => handleSearchChange('')} // También usa la transición
+              onClick={() => handleSearchChange('')}
               className="text-orange-400 hover:text-orange-300 transition-colors font-medium"
             >
               Limpiar búsqueda
@@ -206,12 +189,10 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
         )}
       </div>
 
-      {/* Filtros */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-slate-700/50 space-y-3">
          <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label className="text-xs font-medium text-slate-300">Posición</Label>
-            {/* ✅ 8. Usamos los nuevos manejadores */}
             <Select value={filterPosition} onValueChange={handlePositionChange}>
               <SelectTrigger className="h-9 bg-slate-800/50 border-slate-700 text-slate-200 text-sm">
                 <SelectValue />
@@ -224,7 +205,6 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-1">
             <Label className="text-xs font-medium text-slate-300">Elemento</Label>
             <Select value={elementFilter} onValueChange={handleElementChange}>
@@ -240,7 +220,6 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
             </Select>
           </div>
         </div>
-
         <div className="space-y-1">
           <Label className="text-xs font-medium text-slate-300">Equipo</Label>
           <Select value={teamFilter} onValueChange={handleTeamChange}>
@@ -269,8 +248,6 @@ export default function PlayerSidebar({ onPlayerSelect, usedPlayerIds }: PlayerS
         </div>
       </div>
 
-      {/* Lista de jugadores */}
-      {/* ✅ 9. Usamos 'isPending' para dar feedback visual de carga */}
       <div className={`flex-1 min-h-0 transition-opacity ${isPending ? 'opacity-50' : 'opacity-100'}`}>
         <ScrollArea className="h-full">
           <div className="p-3 space-y-2">

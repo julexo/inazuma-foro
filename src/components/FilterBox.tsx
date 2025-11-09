@@ -1,6 +1,5 @@
 'use client'
 
-// ✅ 1. Importa 'useTransition'
 import { useState, useEffect, useRef, useCallback, useTransition } from 'react'
 import { Filter, Search, TrendingUp, Calendar, Sparkles, ArrowUpDown, X } from 'lucide-react'
 import { Input } from "@/components/ui/input"
@@ -27,11 +26,9 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
   
   const searchRef = useRef<HTMLDivElement>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // ✅ 2. Inicializa useTransition
   const [isPending, startTransition] = useTransition()
 
-  // Efecto para clics fuera (sin cambios)
+  // ... (Todos los hooks: useEffect, useCallback, etc. se mantienen igual) ...
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -43,7 +40,6 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Efecto para la lista de autocompletado (sin cambios)
   useEffect(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -70,21 +66,12 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
     }
   }, [searchQuery, isInputFocused])
 
-  // --- ✅ 3. Manejadores de filtro envueltos en startTransition ---
-
-  // Manejador para el input de búsqueda
   const handleSearchChange = (query: string) => {
-    // Actualiza el input inmediatamente
     setSearchQuery(query)
-    
-    // El 'debounce' ya hace que esto no sea bloqueante para el 'onFilterChange'
-    // Pero mantenemos la lógica de la lista de resultados
     if (!isInputFocused) {
       setIsInputFocused(true);
     }
   }
-
-  // Manejador para el 'Enter' en el input
   const handleSearchSubmit = () => {
     startTransition(() => {
       if (onFilterChange) {
@@ -94,28 +81,22 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
     setShowResults(false)
     setIsInputFocused(false)
   }
-
-  // Manejador para el Select de Formación
   const handleFormationChange = (form: string) => {
-    setFormation(form) // Actualiza el Select inmediatamente
+    setFormation(form)
     startTransition(() => {
       if (onFilterChange) {
         onFilterChange({ playerName: searchQuery, formation: form, sortBy })
       }
     })
   }
-
-  // Manejador para el Select de Orden
   const handleSortChange = (sort: string) => {
-    setSortBy(sort) // Actualiza el Select inmediatamente
+    setSortBy(sort)
     startTransition(() => {
       if (onFilterChange) {
         onFilterChange({ playerName: searchQuery, formation, sortBy: sort })
       }
     })
   }
-
-  // Manejador para limpiar filtros
   const handleClearFilters = () => {
     setSearchQuery('')
     setFormation('all')
@@ -126,12 +107,9 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
       }
     })
   }
-
-  // --- (Funciones de UI que no cambian el filtro principal) ---
   const handleInputFocus = useCallback(() => {
     setIsInputFocused(true)
   }, [])
-
   const handlePlayerSelect = (player: Player) => {
     setSearchQuery(player.name)
     setShowResults(false)
@@ -144,21 +122,18 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
   }
   
   return (
-    // ✅ 4. Usa 'isPending' para dar feedback visual
     <div className={`relative overflow-hidden transition-opacity ${isPending ? 'opacity-70' : 'opacity-100'}`}>
-      {/* ... (Efectos decorativos) ... */}
       <div className="absolute -top-20 -left-20 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl animate-pulse" />
       <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       
       <div className="relative">
-        {/* ... (Header premium con título y badge) ... */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-5 border-b border-slate-700/50">
            <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/20 via-orange-600/20 to-amber-600/20 border border-orange-500/40 shadow-lg">
-              <Filter className="h-5 w-5 text-orange-400" />
+            <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-br from-orange-500/20 via-orange-600/20 to-amber-600/20 border border-orange-500/40 shadow-lg">
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
                 Filtros de Búsqueda
                 <Sparkles className="h-4 w-4 text-orange-400 animate-pulse" />
               </h2>
@@ -166,7 +141,7 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
             </div>
           </div>
           
-          <div className="relative">
+          <div className="relative self-start sm:self-auto">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 rounded-full blur-md animate-pulse" />
             <Badge className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-700 text-white border-blue-500/50 px-4 py-1.5 text-sm font-bold shadow-xl">
               <TrendingUp className="h-3.5 w-3.5 mr-1.5 inline" />
@@ -175,13 +150,12 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
           </div>
         </div>
 
-        {/* Grid de filtros premium */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           
           {/* Buscar por Jugador */}
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/50 to-amber-500/50 rounded-xl blur opacity-0 group-hover:opacity-100 transition-all duration-500" />
-            <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900/90 backdrop-blur-xl rounded-xl border border-slate-700/60 p-4 shadow-2xl group-hover:shadow-orange-500/20 transition-all duration-300">
+            <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900/90 backdrop-blur-xl rounded-xl border border-slate-700/60 p-3 sm:p-4 shadow-2xl group-hover:shadow-orange-500/20 transition-all duration-300">
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30">
@@ -200,15 +174,13 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
                   type="text"
                   placeholder="Ej: Mark Evans"
                   value={searchQuery}
-                  // ✅ 5. Usa los nuevos manejadores
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onFocus={handleInputFocus}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit() }}
-                  className="pl-10 bg-slate-900/70 border-slate-700/70 text-white placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50 transition-all duration-300 h-11"
+                  className="pl-10 bg-slate-900/70 border-slate-700/70 text-white placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:border-orange-500/50 transition-all duration-300 h-10 sm:h-11"
                   autoComplete="off"
                 />
 
-                {/* Lista de autocompletado (sin cambios) */}
                 {showResults && searchResults.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-20 overflow-hidden">
                     <ul className="divide-y divide-slate-700">
@@ -231,7 +203,8 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
                   </div>
                 )}
               </div>
-              <p className="text-[10px] text-slate-500 mt-2 flex items-center gap-1">
+              {/* ✅ CORREGIDO: 'flex' eliminado */}
+              <p className="text-[10px] text-slate-500 mt-2 items-center gap-1 hidden sm:flex">
                 <Sparkles className="h-3 w-3" />
                 Busca por nombre de jugador
               </p>
@@ -241,7 +214,7 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
           {/* Formación */}
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/50 to-cyan-500/50 rounded-xl blur opacity-0 group-hover:opacity-100 transition-all duration-500" />
-            <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900/90 backdrop-blur-xl rounded-xl border border-slate-700/60 p-4 shadow-2xl group-hover:shadow-blue-500/20 transition-all duration-300">
+            <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900/90 backdrop-blur-xl rounded-xl border border-slate-700/60 p-3 sm:p-4 shadow-2xl group-hover:shadow-blue-500/20 transition-all duration-300">
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-blue-500/20 border border-blue-500/30">
@@ -254,9 +227,8 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
                 <div className="flex-1 h-px bg-gradient-to-r from-blue-500/50 to-transparent" />
               </div>
               
-              {/* ✅ 5. Usa el nuevo manejador */}
               <Select value={formation} onValueChange={handleFormationChange} disabled={isPending}>
-                <SelectTrigger className="bg-slate-900/70 border-slate-700/70 text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 h-11">
+                <SelectTrigger className="bg-slate-900/70 border-slate-700/70 text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 h-10 sm:h-11">
                   <SelectValue placeholder="Todas las formaciones" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
@@ -272,7 +244,8 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[10px] text-slate-500 mt-2 flex items-center gap-1">
+              {/* ✅ CORREGIDO: 'flex' eliminado */}
+              <p className="text-[10px] text-slate-500 mt-2 items-center gap-1 hidden sm:flex">
                 <Sparkles className="h-3 w-3" />
                 Filtra por sistema táctico
               </p>
@@ -282,7 +255,7 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
           {/* Ordenar por */}
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/50 to-pink-500/50 rounded-xl blur opacity-0 group-hover:opacity-100 transition-all duration-500" />
-            <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900/90 backdrop-blur-xl rounded-xl border border-slate-700/60 p-4 shadow-2xl group-hover:shadow-purple-500/20 transition-all duration-300">
+            <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-850/90 to-slate-900/90 backdrop-blur-xl rounded-xl border border-slate-700/60 p-3 sm:p-4 shadow-2xl group-hover:shadow-purple-500/20 transition-all duration-300">
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30">
@@ -295,9 +268,8 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
                 <div className="flex-1 h-px bg-gradient-to-r from-purple-500/50 to-transparent" />
               </div>
               
-              {/* ✅ 5. Usa el nuevo manejador */}
               <Select value={sortBy} onValueChange={handleSortChange} disabled={isPending}>
-                <SelectTrigger className="bg-slate-900/70 border-slate-700/70 text-white focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-300 h-11">
+                <SelectTrigger className="bg-slate-900/70 border-slate-700/70 text-white focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-300 h-10 sm:h-11">
                   <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
@@ -315,7 +287,8 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-[10px] text-slate-500 mt-2 flex items-center gap-1">
+              {/* ✅ CORREGIDO: 'flex' eliminado */}
+              <p className="text-[10px] text-slate-500 mt-2 items-center gap-1 hidden sm:flex">
                 <Sparkles className="h-3 w-3" />
                 Ordena los resultados
               </p>
@@ -331,10 +304,10 @@ export default function FilterBox({ onFilterChange, resultsCount }: FilterBoxPro
           </div>
           {(searchQuery || formation !== 'all' || sortBy !== 'recent') && (
             <Button
-              onClick={handleClearFilters} // ✅ Usa el nuevo manejador
+              onClick={handleClearFilters}
               variant="ghost"
               size="sm"
-              className="text-slate-300 hover:text-white hover:bg-slate-700/50"
+              className="text-slate-300 hover:text-white hover:bg-slate-700/50 h-8 sm:h-9"
               disabled={isPending}
             >
               <X className="h-4 w-4 mr-2" />

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+
 // Usa la URL privada y la clave de servicio privada
 const supabaseAdmin = createClient(
     process.env.SUPABASE_URL!,

@@ -22,49 +22,57 @@ export default function ThreadCard({
   id, author, avatarUrl, timestamp, title, previewText, tag, comments, views, likes
 }: ThreadCardProps) {
   return (
-    <div className="bg-slate-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200">
+    // ✅ CAMBIO: Padding más pequeño en móvil (p-4)
+    <div className="bg-slate-100 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200">
       <div className="flex items-center gap-3 mb-4">
         <Image
           src={avatarUrl}
           alt={`Avatar de ${author}`}
           width={48}
           height={48}
-          className="w-12 h-12 rounded-full"
+          // ✅ CAMBIO: Avatar más pequeño en móvil (h-10 w-10)
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full"
         />
         <div>
           <span className="font-semibold text-slate-900">{author}</span>
-          <span className="text-sm text-black"> · {timestamp}</span>
+          {/* ✅ CAMBIO: Timestamp más pequeño en móvil */}
+          <span className="text-xs sm:text-sm text-black"> · {timestamp}</span>
         </div>
       </div>
 
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <Link href={`/threads/${id}`} className="group">
-            <h3 className="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+            {/* ✅ CAMBIO: Título más pequeño en móvil */}
+            <h3 className="text-lg sm:text-xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
               {title}
             </h3>
-            {/* Este es el popup "Vista previa" que se ve en tu captura, pero es complejo
-                para un ejemplo simple, así que lo omitimos por ahora. */}
           </Link>
-          <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+          {/* ✅ CAMBIO: Ocultamos el tag en pantallas muy pequeñas (opcional) */}
+          <span className="hidden sm:inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
             {tag}
           </span>
         </div>
-        <p className="text-black">
+        <p className="text-black text-sm sm:text-base">
           {previewText}
         </p>
       </div>
 
       <div className="flex justify-between items-center">
         <div className="flex gap-4 text-black">
+          {/* Los comentarios son importantes, los dejamos */}
           <span className="flex items-center gap-1.5 text-sm">
             <MessageSquare size={16} /> {comments}
           </span>
-          <span className="flex items-center gap-1.5 text-sm">
+          
+          {/* ✅ CAMBIO: Ocultamos Vistas en móvil (hidden) y mostramos en sm: y más */}
+          <span className="hidden sm:flex items-center gap-1.5 text-sm">
             <Eye size={16} /> {views}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-pink-600 font-semibold">
+        
+        {/* ✅ CAMBIO: Ocultamos Likes en móvil (hidden) y mostramos en sm: y más */}
+        <div className="hidden sm:flex items-center gap-1.5 text-sm text-pink-600 font-semibold">
           <Heart size={16} className="fill-current" /> {likes}
         </div>
       </div>
